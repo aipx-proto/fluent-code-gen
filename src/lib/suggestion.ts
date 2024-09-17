@@ -1,7 +1,10 @@
 import { distinctUntilChanged, filter, map, merge, Observable, share, switchMap, tap } from "rxjs";
 import { docsIndex } from "../data/docs-index";
 
-export interface SuggestionItem {}
+export interface DocumentSuggestion {
+  filename: string;
+  title: string;
+}
 export function getSuggestionStream<T>($keyword: Observable<string>, onMatch: (keyword: string) => Promise<T[]>): Observable<T[]> {
   const $latestAtMention = $keyword.pipe(distinctUntilChanged(), share());
 

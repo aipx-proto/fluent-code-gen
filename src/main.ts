@@ -1,7 +1,8 @@
 import { html, render } from "lit";
 import { repeat } from "lit/directives/repeat.js";
-import { distinctUntilChanged, filter, fromEvent, map, merge, share, switchMap, tap } from "rxjs";
+import { distinctUntilChanged, endWith, filter, fromEvent, map, merge, share, switchMap, tap } from "rxjs";
 import { getChatCompletionStream } from "./lib/chat";
+import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
 import { getAtMentionedWord, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
 import { $thread, appendMessage, createMessage } from "./lib/thread";
@@ -13,6 +14,7 @@ import "./main.css";
 const threadElement = $("#thread") as HTMLElement;
 const promptTextarea = $(`[name="prompt"]`) as HTMLTextAreaElement;
 const suggestionsElement = $("#suggestions") as HTMLElement;
+const previewIFrame = $("#preview") as HTMLIFrameElement;
 
 /**
  * Handle inputs
@@ -39,41 +41,41 @@ const $response = $submitPrompt
 
       const docMentions = prompt.match(/@(\w+)/g) || [];
       const docs = await getDocs(docMentions.map((mention) => mention.slice(1)));
-      const systemPrompt = `
-Wirte a single jsx react program to meet user's goal. You can only rely on the examples in following documentation. When there is no example, do not extrapolate.
-
-"""
-${docs.join("\n\n---\n\n")}
-"""
-
-Now respond in this format:
-\`\`\`jsx
-import React, { ... } from 'react'
-import ReactDOM from 'react-dom/client'
-import { FluentProvider, webLightTheme, ... } from '@fluentui/react-components'
-
-function App() {
-  /** Your code here */
-}
-
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <FluentProvider theme={webLightTheme}>
-      <App />
-    </FluentProvider>
-  </React.StrictMode>)
-\`\`\`
-      `.trim();
+      const systemPrompt = getCodeGenSystemPrompt({ docs });
       const $chunks = await getChatCompletionStream([
         { role: "system", content: systemPrompt },
         ...$thread.value.map((item) => ({ role: item.role, content: item.content })),
       ]);
       return { $chunks, responseId };
     }),
-    switchMap(({ $chunks, responseId }) => $chunks.pipe(map((chunk) => ({ responseId, chunk })))),
-    tap((item) => appendMessage(item.responseId, item.chunk))
+    switchMap(({ $chunks, responseId }) =>
+      $chunks.pipe(
+        map((chunk) => ({ responseId, chunk, end: false })),
+        endWith({ responseId, chunk: "", end: true })
+      )
+    ),
+    tap((item) => {
+      if (!item.end) appendMessage(item.responseId, item.chunk);
+      else generatePreview(item.responseId);
+    })
   )
   .subscribe();
+
+function generatePreview(responseId: string) {
+  // ```jsx
+  // ...
+  // ```
+  const markdownCodePattern = /```jsx\n([\s\S]*)\n```/;
+
+  const jsxCode =
+    $thread.value
+      .find((item) => item.id === responseId)
+      ?.content.match(markdownCodePattern)
+      ?.at(1) ?? "";
+  if (jsxCode) {
+    previewIFrame.srcdoc = `Hello world ${Date.now()}`;
+  }
+}
 
 const $latestPrompt = merge($promptInput, $submitPrompt.pipe(map((_) => ""))).pipe(distinctUntilChanged());
 const $keyword = $latestPrompt.pipe(map((_) => getAtMentionedWord(promptTextarea)));

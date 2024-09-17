@@ -1,4 +1,6 @@
-export const docsIndex = [
+import { DocumentSuggestion } from "../lib/suggestion";
+
+export const docsIndex: DocumentSuggestion[] = [
   { filename: "components-card-cardpreview--docs.md", title: "CardPreview" },
   { filename: "components-card-cardfooter--docs.md", title: "CardFooter" },
   { filename: "components-card-cardheader--docs.md", title: "CardHeader" },
