@@ -1,0 +1,23 @@
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  font-family: monospace;
+  height: 100%;
+}
+
+.root-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: 100%;
+}
+
+.designer-layout {
+  display: grid;
+  grid-template-rows: 1fr auto;
+}
