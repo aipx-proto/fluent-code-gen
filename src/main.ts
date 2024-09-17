@@ -1,55 +1,22 @@
 import { html, render } from "lit";
 import { repeat } from "lit/directives/repeat.js";
-import { BehaviorSubject, distinctUntilChanged, filter, fromEvent, map, merge, share, tap } from "rxjs";
-import { getChatCompletionStream } from "./chat";
+import { distinctUntilChanged, filter, fromEvent, map, merge, share, tap } from "rxjs";
 import { docsIndex } from "./data/docs-index";
 import { getAtMentionedWord } from "./lib/at-mention";
+import { getChatCompletionStream } from "./lib/chat";
 import { $ } from "./lib/query";
+import { $thread, appendMessage, createMessage } from "./lib/thread";
 import "./main.css";
 
+/**
+ * DOM queries
+ */
 const threadElement = $("#thread") as HTMLElement;
 const promptTextarea = $(`[name="prompt"]`) as HTMLTextAreaElement;
 
-const $thread = new BehaviorSubject<ThreadItem[]>([]);
-
-$thread.subscribe((thread) => {
-  render(
-    html`
-      <ul>
-        ${repeat(
-          thread,
-          (item) => item.id,
-          (item) => html`<li><span class="role">${item.role}:</span> ${item.content}</li>`
-        )}
-      </ul>
-    `,
-    threadElement
-  );
-});
-
-interface ThreadItem {
-  id: string;
-  role: string;
-  content: string;
-}
-
-function updateThread(updateFn: (prev: ThreadItem[]) => ThreadItem[]) {
-  $thread.next(updateFn($thread.value));
-}
-
-function createMessage(role: string, content: string) {
-  const id = crypto.randomUUID();
-  updateThread((prev) => [...prev, { id, role, content }]);
-  return id;
-}
-
-function appendMessage(id: string, delta: string) {
-  updateThread((prev) => {
-    const message = prev.find((item) => item.id === id);
-    if (!message) return prev;
-    return prev.map((item) => (item.id === id ? { ...item, content: item.content + delta } : item));
-  });
-}
+/**
+ * Handle inputs
+ */
 
 const $promptInput = fromEvent(promptTextarea, "input").pipe(map((e) => (e.target as HTMLTextAreaElement).value));
 const $submitPrompt = fromEvent(promptTextarea, "keydown").pipe(
@@ -96,6 +63,25 @@ const $docSuggestions = merge($emptyMention, $matchedMention).pipe(
   )
 );
 
+/**
+ * Render outputs
+ */
+
 $docSuggestions.subscribe((suggestions) => {
   render(suggestions, ($("#suggestions") as HTMLElement)!);
+});
+
+$thread.subscribe((thread) => {
+  render(
+    html`
+      <ul>
+        ${repeat(
+          thread,
+          (item) => item.id,
+          (item) => html`<li><span class="role">${item.role}:</span> ${item.content}</li>`
+        )}
+      </ul>
+    `,
+    threadElement
+  );
 });
