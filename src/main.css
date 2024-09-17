@@ -20,4 +20,14 @@ body {
 .designer-layout {
   display: grid;
   grid-template-rows: 1fr auto;
+  padding-bottom: 1rem;
+}
+
+[data-resize="horizontal"] {
+  resize: horizontal;
+  overflow: auto;
+}
+[data-resize="vertical"] {
+  resize: vertical;
+  overflow: auto;
 }
