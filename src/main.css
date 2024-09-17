@@ -24,15 +24,18 @@ body {
 .designer {
   /* layout */
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto 1fr auto;
   grid-auto-rows: auto;
-  padding: 1rem;
 
   /* style */
   border-right: 1px solid var(--border-color);
 }
 
 .thread {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding: 1rem;
+
   ul {
     /* layout */
     padding: 0;
@@ -49,9 +52,9 @@ body {
 }
 
 .player {
-  padding: 1rem;
 }
 
+/* utils */
 [data-resize="horizontal"] {
   resize: horizontal;
   overflow: auto;
@@ -62,4 +65,9 @@ body {
 }
 [data-resize="none"] {
   resize: none;
+}
+
+[data-wrap="pre-wrap"] {
+  white-space: pre-wrap;
+  word-break: break-word;
 }
