@@ -1,6 +1,7 @@
 import { html, render } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 import { BehaviorSubject, distinctUntilChanged, filter, fromEvent, map, merge, share, tap } from "rxjs";
+import { getChatCompletionStream } from "./chat";
 import { docsIndex } from "./data/docs-index";
 import { getAtMentionedWord } from "./lib/at-mention";
 import { $ } from "./lib/query";
@@ -9,7 +10,7 @@ import "./main.css";
 const threadElement = $("#thread") as HTMLElement;
 const promptTextarea = $(`[name="prompt"]`) as HTMLTextAreaElement;
 
-const $thread = new BehaviorSubject<any[]>([]);
+const $thread = new BehaviorSubject<ThreadItem[]>([]);
 
 $thread.subscribe((thread) => {
   render(
@@ -18,7 +19,7 @@ $thread.subscribe((thread) => {
         ${repeat(
           thread,
           (item) => item.id,
-          (item) => html`<li>${item.role}: ${item.content}</li>`
+          (item) => html`<li><span class="role">${item.role}:</span> ${item.content}</li>`
         )}
       </ul>
     `,
@@ -36,15 +37,18 @@ function updateThread(updateFn: (prev: ThreadItem[]) => ThreadItem[]) {
   $thread.next(updateFn($thread.value));
 }
 
-function renderNewUserMessage() {
-  updateThread((prev) => [
-    ...prev,
-    {
-      id: crypto.randomUUID(),
-      role: "user",
-      content: promptTextarea.value,
-    },
-  ]);
+function createMessage(role: string, content: string) {
+  const id = crypto.randomUUID();
+  updateThread((prev) => [...prev, { id, role, content }]);
+  return id;
+}
+
+function appendMessage(id: string, delta: string) {
+  updateThread((prev) => {
+    const message = prev.find((item) => item.id === id);
+    if (!message) return prev;
+    return prev.map((item) => (item.id === id ? { ...item, content: item.content + delta } : item));
+  });
 }
 
 const $promptInput = fromEvent(promptTextarea, "input").pipe(map((e) => (e.target as HTMLTextAreaElement).value));
@@ -52,9 +56,14 @@ const $submitPrompt = fromEvent(promptTextarea, "keydown").pipe(
   filter((e) => (e as KeyboardEvent).key === "Enter" && !(e as KeyboardEvent).shiftKey),
   tap((e) => e.preventDefault()),
   filter((e) => !!(e.target as HTMLTextAreaElement).value),
-  tap((e) => {
-    renderNewUserMessage();
+  tap(async (e) => {
+    createMessage("user", (e.target as HTMLTextAreaElement).value);
     (e.target as HTMLTextAreaElement).value = "";
+    const responseId = createMessage("assistant", "");
+    const $chunks = await getChatCompletionStream($thread.value.map((item) => ({ role: item.role, content: item.content })));
+    $chunks.subscribe((chunk) => {
+      appendMessage(responseId, chunk);
+    });
   })
 );
 

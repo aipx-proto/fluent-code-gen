@@ -1,5 +1,6 @@
 import { getBearerTokenProvider, InteractiveBrowserCredential } from "@azure/identity";
 import { AzureOpenAI } from "openai";
+import { filter, from, map, mergeMap } from "rxjs";
 
 const credential = new InteractiveBrowserCredential({
   tenantId: "72f988bf-86f1-41af-91ab-2d7cd011db47",
@@ -22,3 +23,17 @@ document.querySelector("form")?.addEventListener("submit", async (event) => {
 
   document.querySelector("#output")!.textContent = JSON.stringify({ response }, null, 2);
 });
+
+export async function getChatCompletionStream(messages: any[]) {
+  const stream = client.chat.completions.create({
+    stream: true,
+    messages: messages,
+    model: "gpt-4o",
+  });
+
+  return from(stream).pipe(
+    mergeMap((stream) => stream),
+    map((chunk) => chunk.choices[0]?.delta?.content ?? ""),
+    filter((content) => !!content)
+  );
+}
