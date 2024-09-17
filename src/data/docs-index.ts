@@ -1,6 +1,8 @@
 import { DocumentSuggestion } from "../lib/suggestion";
 
-export const docsIndex: DocumentSuggestion[] = [
+const styleDocsIndex: DocumentSuggestion[] = [{ filename: "styles-icon--docs.md", title: "Icons" }];
+
+const componentDocsIndex: DocumentSuggestion[] = [
   { filename: "components-card-cardpreview--docs.md", title: "CardPreview" },
   { filename: "components-card-cardfooter--docs.md", title: "CardFooter" },
   { filename: "components-card-cardheader--docs.md", title: "CardHeader" },
@@ -65,3 +67,5 @@ export const docsIndex: DocumentSuggestion[] = [
   { filename: "components-tree--docs.md", title: "Tree" },
   { filename: "components-table--docs.md", title: "Table" },
 ];
+
+export const docsIndex = [...styleDocsIndex, ...componentDocsIndex];

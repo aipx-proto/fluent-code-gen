@@ -12,19 +12,12 @@ ${options.docs.join("\n\n---\n\n")}
 Now respond in this format:
 \`\`\`jsx
 import React, { ... } from 'react'
-import ReactDOM from 'react-dom/client'
 import { FluentProvider, webLightTheme, ... } from '@fluentui/react-components'
+import { ... } from '@fluentui/react-icons' // needed when using icons
 
-function App() {
+export default function App() {
   /** Your code here */
 }
-
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <FluentProvider theme={webLightTheme}>
-      <App />
-    </FluentProvider>
-  </React.StrictMode>)
 \`\`\`
   `.trim();
 }

@@ -48,7 +48,9 @@ export async function getDocs(componentNames: string[]) {
     uniqueLowercaseNames
       .map((title) => docsDict.get(title)!)
       .filter(Boolean)
-      .map((filename) => fetch(`/docs/${filename}`).then((res) => res.text()))
+      .map((filename) => fetch(`/docs/${filename.filename}`).then((res) => res.text()))
   );
   return docs;
 }
+
+export async function compileIcons() {}

@@ -4,6 +4,7 @@ import { distinctUntilChanged, endWith, filter, fromEvent, map, merge, share, sw
 import { getChatCompletionStream } from "./lib/chat";
 import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
+import { getReactVMCode } from "./lib/react-vm";
 import { getAtMentionedWord, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
 import { $thread, appendMessage, createMessage } from "./lib/thread";
 import "./main.css";
@@ -41,6 +42,7 @@ const $response = $submitPrompt
 
       const docMentions = prompt.match(/@(\w+)/g) || [];
       const docs = await getDocs(docMentions.map((mention) => mention.slice(1)));
+      console.log(`Docs in use`, docs);
       const systemPrompt = getCodeGenSystemPrompt({ docs });
       const $chunks = await getChatCompletionStream([
         { role: "system", content: systemPrompt },
@@ -73,7 +75,7 @@ function generatePreview(responseId: string) {
       ?.content.match(markdownCodePattern)
       ?.at(1) ?? "";
   if (jsxCode) {
-    previewIFrame.srcdoc = `Hello world ${Date.now()}`;
+    previewIFrame.srcdoc = getReactVMCode({ implementation: jsxCode });
   }
 }
 

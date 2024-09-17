@@ -52,6 +52,15 @@ body {
 }
 
 .player {
+  display: grid;
+  grid-template-rows: auto 1fr;
+
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+  }
 }
 
 /* utils */
