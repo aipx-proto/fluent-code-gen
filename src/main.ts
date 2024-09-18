@@ -2,6 +2,7 @@ import { html, render } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 import { distinctUntilChanged, endWith, filter, fromEvent, map, merge, share, switchMap, tap } from "rxjs";
 import { getChatCompletionStream } from "./lib/chat";
+import { debugTap } from "./lib/debug";
 import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
 import { generateScriptContent, getReactVMCode } from "./lib/react-vm";
@@ -30,6 +31,13 @@ fromEvent(appRoot, "click")
       const action = trigger.closest("[data-action]")?.getAttribute("data-action");
       if (action) handleAction(action, trigger);
     })
+  )
+  .subscribe();
+
+const $pastedFiles = fromEvent(promptTextarea, "paste")
+  .pipe(
+    map((e) => (e as ClipboardEvent).clipboardData?.files),
+    debugTap("pasted")
   )
   .subscribe();
 
