@@ -4,7 +4,6 @@
 - Token counter
 - Undo steps
 - Adjust documentation position in thread
-- Cleanup history
 - Compress history
 - Handle errors
 - Export as file
@@ -16,3 +15,4 @@
 
 - Source code viewer
 - Paste screenshot
+- Cleanup history

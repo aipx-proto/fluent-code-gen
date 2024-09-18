@@ -33,6 +33,7 @@ fromEvent(appRoot, "click")
       if (action) {
         handlePlayerTabSwitch(action);
         handleRemoveAttachment(action, trigger);
+        handleClearThread(action);
       }
     })
   )
@@ -161,6 +162,11 @@ function handleRemoveAttachment(action: string, trigger: HTMLElement) {
     ...prev,
     attachments: prev.attachments.filter((attachment) => attachment.url !== attachmentUrl),
   }));
+}
+
+function handleClearThread(action: string) {
+  if (action !== "clear-thread") return;
+  $thread.next([]);
 }
 
 /**
