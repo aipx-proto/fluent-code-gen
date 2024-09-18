@@ -64,21 +64,24 @@ body {
 }
 
 .thumbnail-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 4px;
 }
 
-.thumbnail {
+.thumbnail-grid__item {
   height: 32px;
+  width: 40px;
+}
+
+.thumbnail {
+  height: 100%;
   width: 100%;
   object-fit: cover;
 }
 
 .thumbnail-button {
   padding: 0;
-  display: grid;
-  grid-template-rows: auto auto;
 }
 
 /* utils */

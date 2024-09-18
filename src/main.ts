@@ -28,9 +28,12 @@ const attachments = $("#attachments") as HTMLElement;
 fromEvent(appRoot, "click")
   .pipe(
     tap((e) => {
-      const trigger = e.target as HTMLElement;
-      const action = trigger.closest("[data-action]")?.getAttribute("data-action");
-      if (action) handleAction(action, trigger);
+      const trigger = (e.target as HTMLElement)?.closest("[data-action]") as HTMLElement;
+      const action = trigger?.getAttribute("data-action");
+      if (action) {
+        handlePlayerTabSwitch(action);
+        handleRemoveAttachment(action, trigger);
+      }
     })
   )
   .subscribe();
@@ -49,6 +52,8 @@ const $pastedFiles = fromEvent(promptTextarea, "paste")
         })
       )
     ),
+    map((attachments) => attachments.filter((attachment) => attachment.url.startsWith("data:image/"))),
+    map((attachments) => attachments.filter((attachment) => !$draft.value.attachments.some((existing) => existing.url === attachment.url))),
     tap((attachments) => updateDraft((prev) => ({ ...prev, attachments: [...prev.attachments, ...attachments] })))
   )
   .subscribe();
@@ -60,7 +65,6 @@ const $promptInput = fromEvent(promptTextarea, "input").pipe(
 const $submitPrompt = fromEvent(promptTextarea, "keydown").pipe(
   filter((e) => (e as KeyboardEvent).key === "Enter" && !(e as KeyboardEvent).shiftKey),
   tap((e) => e.preventDefault()),
-  filter((e) => !!(e.target as HTMLTextAreaElement).value),
   concatMap(async (e) => {
     const prompt = (e.target as HTMLTextAreaElement).value;
     const attachments = $draft.value.attachments;
@@ -133,8 +137,8 @@ const $suggestions = getSuggestionStream($keyword, matchKeywordToDocs);
 /**
  * Delegated action handlers
  */
-function handleAction(action: string, trigger: HTMLElement) {
-  console.log({ action, trigger });
+function handlePlayerTabSwitch(action: string) {
+  if (action !== "open-preview" && action !== "open-source") return;
   switch (action) {
     case "open-preview": {
       previewIFrame.dataset.activeTab = "true";
@@ -147,6 +151,16 @@ function handleAction(action: string, trigger: HTMLElement) {
       break;
     }
   }
+}
+
+function handleRemoveAttachment(action: string, trigger: HTMLElement) {
+  if (action !== "remove-attachment") return;
+  const attachmentUrl = trigger.querySelector("img")?.src;
+
+  updateDraft((prev) => ({
+    ...prev,
+    attachments: prev.attachments.filter((attachment) => attachment.url !== attachmentUrl),
+  }));
 }
 
 /**
@@ -189,7 +203,7 @@ $thread
                         <div class="thumbnail-grid">
                           ${item.content
                             .filter((part) => part.type === "image_url")
-                            .map((part) => html`<img class="thumbnail" src=${part.image_url.url} alt="attachment" />`)}
+                            .map((part) => html`<div class="thumbnail-grid__item"><img class="thumbnail" src=${part.image_url.url} alt="attachment" /></div>`)}
                         </div>
                       `
                     : ""}
@@ -207,7 +221,7 @@ $draft
       (draft) =>
         html`
           ${draft.attachments.map(
-            (file) => html`<button class="thumbnail-button" title=${file.name}>
+            (file) => html`<button class="thumbnail-button thumbnail-grid__item" title=${file.name} data-action="remove-attachment">
               <img src=${file.url} alt="attachment" class="thumbnail" />
             </button>`
           )}
