@@ -25,3 +25,13 @@ export function appendMessage(id: string, delta: string) {
 function updateThread(updateFn: (prev: ThreadItem[]) => ThreadItem[]) {
   $thread.next(updateFn($thread.value));
 }
+
+export interface Draft {
+  content: string;
+  attachments: File[];
+}
+export const $draft = new BehaviorSubject<Draft>({ content: "", attachments: [] });
+
+export function updateDraft(updateFn: (prev: Draft) => Draft) {
+  $draft.next({ ...$draft.value, ...updateFn($draft.value) });
+}

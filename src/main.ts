@@ -2,12 +2,11 @@ import { html, render } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 import { distinctUntilChanged, endWith, filter, fromEvent, map, merge, share, switchMap, tap } from "rxjs";
 import { getChatCompletionStream } from "./lib/chat";
-import { debugTap } from "./lib/debug";
 import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
 import { generateScriptContent, getReactVMCode } from "./lib/react-vm";
 import { getAtMentionedWord, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
-import { $thread, appendMessage, createMessage } from "./lib/thread";
+import { $draft, $thread, appendMessage, createMessage, updateDraft } from "./lib/thread";
 import "./main.css";
 
 /**
@@ -19,6 +18,7 @@ const promptTextarea = $(`[name="prompt"]`) as HTMLTextAreaElement;
 const suggestionsElement = $("#suggestions") as HTMLElement;
 const previewIFrame = $("#preview") as HTMLIFrameElement;
 const sourceElement = $("#source") as HTMLPreElement;
+const attachments = $("#attachments") as HTMLElement;
 
 /**
  * Handle inputs
@@ -37,11 +37,15 @@ fromEvent(appRoot, "click")
 const $pastedFiles = fromEvent(promptTextarea, "paste")
   .pipe(
     map((e) => (e as ClipboardEvent).clipboardData?.files),
-    debugTap("pasted")
+    filter((files) => !!files),
+    tap((files) => updateDraft((prev) => ({ ...prev, attachments: [...prev.attachments, ...files] })))
   )
   .subscribe();
 
-const $promptInput = fromEvent(promptTextarea, "input").pipe(map((e) => (e.target as HTMLTextAreaElement).value));
+const $promptInput = fromEvent(promptTextarea, "input").pipe(
+  map((e) => (e.target as HTMLTextAreaElement).value),
+  tap((content) => updateDraft((prev) => ({ ...prev, content })))
+);
 const $submitPrompt = fromEvent(promptTextarea, "keydown").pipe(
   filter((e) => (e as KeyboardEvent).key === "Enter" && !(e as KeyboardEvent).shiftKey),
   tap((e) => e.preventDefault()),
@@ -50,6 +54,7 @@ const $submitPrompt = fromEvent(promptTextarea, "keydown").pipe(
     const prompt = (e.target as HTMLTextAreaElement).value;
     createMessage("user", prompt);
     (e.target as HTMLTextAreaElement).value = "";
+    updateDraft((_) => ({ content: "", attachments: [] }));
     return prompt;
   }),
   share()
@@ -163,3 +168,5 @@ $thread
     )
   )
   .subscribe((thread) => render(thread, threadElement));
+
+$draft.pipe(map((draft) => html` ${draft.attachments.map((file) => html`<button>${file.name}</button>`)} `)).subscribe((view) => render(view, attachments));
