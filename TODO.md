@@ -1,5 +1,7 @@
 # TOOD
 
+- Side nav customization
+- Top nav customization
 - Source editor with syntax highlight
 - Token counter
 - Undo steps
@@ -8,8 +10,6 @@
 - Handle errors
 - Export as file
 - Export via URL
-- Side nav customization
-- Top nav customization
 
 # DONE
 
