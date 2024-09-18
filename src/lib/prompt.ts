@@ -11,9 +11,9 @@ ${options.docs.join("\n\n---\n\n")}
 
 Now respond in this format:
 \`\`\`jsx
-import React, { ... } from 'react'
-import { FluentProvider, webLightTheme, ... } from '@fluentui/react-components'
-import { ... } from '@fluentui/react-icons' // needed when using icons
+import React, { ... } from "react";
+import { FluentProvider, webLightTheme, ... } from "@fluentui/react-components";
+import { ... } from "@fluentui/react-icons"; // needed when using icons
 
 export default function App() {
   /** Your code here */

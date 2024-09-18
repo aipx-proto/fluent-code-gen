@@ -31,10 +31,20 @@ export function getReactVMCode(options: GetPreviewOptions) {
 <body>
   <div id="root"></div>
   <script type="text/babel">
-import ReactDOM from 'react-dom/client'
+${options.implementation}
+  </script>
+</body>
+
+</html>
+  `;
+}
+
+export function generateScriptContent(implementation: string) {
+  return `
+import ReactDOM from "react-dom/client";
 import { Shell } from "ai-studio-cdk";
 
-${options.implementation}
+${implementation}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -48,10 +58,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       </Shell>
     </FluentProvider>
   </React.StrictMode>
-)
-  </script>
-</body>
-
-</html>
-  `;
+);
+`.trim();
 }

@@ -1,0 +1,11 @@
+- Token counter
+- Source code viewer
+- Paste screenshot
+- Undo steps
+- Adjust documentation position in thread
+- Cleanup/compress history
+- Handle errors
+- Export as file
+- Export via URL
+- Side nav customization
+- Top nav customization

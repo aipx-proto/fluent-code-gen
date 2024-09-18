@@ -14,7 +14,7 @@
 </head>
 
 <body>
-  <div class="root-layout">
+  <div id="app" class="root-layout">
     <div class="designer" data-resize="horizontal" style="width: 320px;">
       <div>Thread</div>
       <div id="thread" class="thread"></div>
@@ -22,11 +22,14 @@
       <textarea name="prompt" class="textarea" data-resize="none" rows="5" autofocus></textarea>
     </div>
     <div class="player">
-      <div>Preview</div>
-      <iframe id="preview"></iframe>
+      <div>
+        <button data-action="open-preview">Preview</button>
+        <button data-action="open-source">Source</button>
+      </div>
+      <iframe class="player__iframe" data-active-tab="true" id="preview"></iframe>
+      <pre data-active-tab="false" id="source"><code></code></pre>
     </div>
   </div>
-  <pre id="output"></pre>
   <script type="module" src="/src/main.ts"></script>
 </body>
 

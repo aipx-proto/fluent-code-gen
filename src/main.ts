@@ -4,7 +4,7 @@ import { distinctUntilChanged, endWith, filter, fromEvent, map, merge, share, sw
 import { getChatCompletionStream } from "./lib/chat";
 import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
-import { getReactVMCode } from "./lib/react-vm";
+import { generateScriptContent, getReactVMCode } from "./lib/react-vm";
 import { getAtMentionedWord, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
 import { $thread, appendMessage, createMessage } from "./lib/thread";
 import "./main.css";
@@ -12,14 +12,26 @@ import "./main.css";
 /**
  * DOM queries
  */
+const appRoot = $("#app") as HTMLElement;
 const threadElement = $("#thread") as HTMLElement;
 const promptTextarea = $(`[name="prompt"]`) as HTMLTextAreaElement;
 const suggestionsElement = $("#suggestions") as HTMLElement;
 const previewIFrame = $("#preview") as HTMLIFrameElement;
+const sourceElement = $("#source") as HTMLPreElement;
 
 /**
  * Handle inputs
  */
+
+fromEvent(appRoot, "click")
+  .pipe(
+    tap((e) => {
+      const trigger = e.target as HTMLElement;
+      const action = trigger.closest("[data-action]")?.getAttribute("data-action");
+      if (action) handleAction(action, trigger);
+    })
+  )
+  .subscribe();
 
 const $promptInput = fromEvent(promptTextarea, "input").pipe(map((e) => (e.target as HTMLTextAreaElement).value));
 const $submitPrompt = fromEvent(promptTextarea, "keydown").pipe(
@@ -58,12 +70,12 @@ const $response = $submitPrompt
     ),
     tap((item) => {
       if (!item.end) appendMessage(item.responseId, item.chunk);
-      else generatePreview(item.responseId);
+      else renderArtifact(item.responseId);
     })
   )
   .subscribe();
 
-function generatePreview(responseId: string) {
+function renderArtifact(responseId: string) {
   // ```jsx
   // ...
   // ```
@@ -75,13 +87,36 @@ function generatePreview(responseId: string) {
       ?.content.match(markdownCodePattern)
       ?.at(1) ?? "";
   if (jsxCode) {
-    previewIFrame.srcdoc = getReactVMCode({ implementation: jsxCode });
+    const fullScript = generateScriptContent(jsxCode);
+    previewIFrame.srcdoc = getReactVMCode({ implementation: fullScript });
+    const codeElement = sourceElement.querySelector("code");
+    codeElement?.setAttribute("data-lang", "jsx");
+    codeElement!.textContent = fullScript;
   }
 }
 
 const $latestPrompt = merge($promptInput, $submitPrompt.pipe(map((_) => ""))).pipe(distinctUntilChanged());
 const $keyword = $latestPrompt.pipe(map((_) => getAtMentionedWord(promptTextarea)));
 const $suggestions = getSuggestionStream($keyword, matchKeywordToDocs);
+
+/**
+ * Delegated action handlers
+ */
+function handleAction(action: string, trigger: HTMLElement) {
+  console.log({ action, trigger });
+  switch (action) {
+    case "open-preview": {
+      previewIFrame.dataset.activeTab = "true";
+      sourceElement.dataset.activeTab = "false";
+      break;
+    }
+    case "open-source": {
+      previewIFrame.dataset.activeTab = "false";
+      sourceElement.dataset.activeTab = "true";
+      break;
+    }
+  }
+}
 
 /**
  * Render outputs
