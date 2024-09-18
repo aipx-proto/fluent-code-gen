@@ -1,7 +1,8 @@
 import { html, render } from "lit";
 import { repeat } from "lit/directives/repeat.js";
-import { distinctUntilChanged, endWith, filter, fromEvent, map, merge, share, switchMap, tap } from "rxjs";
-import { getChatCompletionStream } from "./lib/chat";
+import { concatMap, distinctUntilChanged, endWith, filter, fromEvent, map, merge, share, switchMap, tap } from "rxjs";
+import { blobToDataUrl } from "./lib/blob";
+import { ChatMessagePart, getChatCompletionStream } from "./lib/chat";
 import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
 import { generateScriptContent, getReactVMCode } from "./lib/react-vm";
@@ -38,7 +39,17 @@ const $pastedFiles = fromEvent(promptTextarea, "paste")
   .pipe(
     map((e) => (e as ClipboardEvent).clipboardData?.files),
     filter((files) => !!files),
-    tap((files) => updateDraft((prev) => ({ ...prev, attachments: [...prev.attachments, ...files] })))
+    switchMap((files) =>
+      Promise.all(
+        [...files].map(async (file) => {
+          return {
+            name: file.name,
+            url: await blobToDataUrl(file),
+          };
+        })
+      )
+    ),
+    tap((attachments) => updateDraft((prev) => ({ ...prev, attachments: [...prev.attachments, ...attachments] })))
   )
   .subscribe();
 
@@ -50,22 +61,33 @@ const $submitPrompt = fromEvent(promptTextarea, "keydown").pipe(
   filter((e) => (e as KeyboardEvent).key === "Enter" && !(e as KeyboardEvent).shiftKey),
   tap((e) => e.preventDefault()),
   filter((e) => !!(e.target as HTMLTextAreaElement).value),
-  map((e) => {
+  concatMap(async (e) => {
     const prompt = (e.target as HTMLTextAreaElement).value;
-    createMessage("user", prompt);
+    const attachments = $draft.value.attachments;
+    const parts: ChatMessagePart[] = [];
     (e.target as HTMLTextAreaElement).value = "";
+    const docMentions = prompt.match(/@(\w+)/g) || [];
+
+    if (prompt.trim()) parts.push({ type: "text", text: prompt });
+    if (attachments.length) parts.push(...attachments.map((attachment) => ({ type: "image_url" as const, image_url: attachment })));
+
+    return { docMentions, parts };
+  }),
+  filter((submission) => submission.parts.length > 0),
+  map((submission) => {
+    createMessage("user", submission.parts);
     updateDraft((_) => ({ content: "", attachments: [] }));
-    return prompt;
+    return submission;
   }),
   share()
 );
 
 const $response = $submitPrompt
   .pipe(
-    switchMap(async (prompt) => {
+    switchMap(async (submission) => {
       const responseId = createMessage("assistant", "");
 
-      const docMentions = prompt.match(/@(\w+)/g) || [];
+      const docMentions = submission.docMentions;
       const docs = await getDocs(docMentions.map((mention) => mention.slice(1)));
       console.log(`Docs in use`, docs);
       const systemPrompt = getCodeGenSystemPrompt({ docs });
@@ -94,11 +116,7 @@ function renderArtifact(responseId: string) {
   // ```
   const markdownCodePattern = /```jsx\n([\s\S]*)\n```/;
 
-  const jsxCode =
-    $thread.value
-      .find((item) => item.id === responseId)
-      ?.content.match(markdownCodePattern)
-      ?.at(1) ?? "";
+  const jsxCode = ($thread.value.find((item) => item.id === responseId)?.content as string).match(markdownCodePattern)?.at(1) ?? "";
   if (jsxCode) {
     const fullScript = generateScriptContent(jsxCode);
     previewIFrame.srcdoc = getReactVMCode({ implementation: fullScript });
@@ -160,7 +178,21 @@ $thread
               (item) =>
                 html`<li>
                   <span class="role">${item.role}:</span>
-                  <div data-wrap="pre-wrap">${item.content}</div>
+                  ${typeof item.content === "string"
+                    ? html` <div data-wrap="pre-wrap">${item.content}</div> `
+                    : item.content
+                        .filter((item) => item.type === "text")
+                        .map((item) => item.text)
+                        .join("")}
+                  ${Array.isArray(item.content)
+                    ? html`
+                        <div class="thumbnail-grid">
+                          ${item.content
+                            .filter((part) => part.type === "image_url")
+                            .map((part) => html`<img class="thumbnail" src=${part.image_url.url} alt="attachment" />`)}
+                        </div>
+                      `
+                    : ""}
                 </li>`
             )}
           </ul>
@@ -169,4 +201,17 @@ $thread
   )
   .subscribe((thread) => render(thread, threadElement));
 
-$draft.pipe(map((draft) => html` ${draft.attachments.map((file) => html`<button>${file.name}</button>`)} `)).subscribe((view) => render(view, attachments));
+$draft
+  .pipe(
+    map(
+      (draft) =>
+        html`
+          ${draft.attachments.map(
+            (file) => html`<button class="thumbnail-button" title=${file.name}>
+              <img src=${file.url} alt="attachment" class="thumbnail" />
+            </button>`
+          )}
+        `
+    )
+  )
+  .subscribe((view) => render(view, attachments));

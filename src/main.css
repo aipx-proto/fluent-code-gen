@@ -63,6 +63,24 @@ body {
   display: block;
 }
 
+.thumbnail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 4px;
+}
+
+.thumbnail {
+  height: 32px;
+  width: 100%;
+  object-fit: cover;
+}
+
+.thumbnail-button {
+  padding: 0;
+  display: grid;
+  grid-template-rows: auto auto;
+}
+
 /* utils */
 [data-resize="horizontal"] {
   resize: horizontal;

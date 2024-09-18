@@ -1,14 +1,15 @@
 import { BehaviorSubject } from "rxjs";
+import { ChatMessage } from "./chat";
 
 export interface ThreadItem {
   id: string;
   role: string;
-  content: string;
+  content: ChatMessage["content"];
 }
 
 export const $thread = new BehaviorSubject<ThreadItem[]>([]);
 
-export function createMessage(role: string, content: string) {
+export function createMessage(role: string, content: ThreadItem["content"]) {
   const id = crypto.randomUUID();
   updateThread((prev) => [...prev, { id, role, content }]);
   return id;
@@ -28,7 +29,7 @@ function updateThread(updateFn: (prev: ThreadItem[]) => ThreadItem[]) {
 
 export interface Draft {
   content: string;
-  attachments: File[];
+  attachments: { name: string; url: string }[];
 }
 export const $draft = new BehaviorSubject<Draft>({ content: "", attachments: [] });
 
