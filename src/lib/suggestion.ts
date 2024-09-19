@@ -1,5 +1,6 @@
 import { distinctUntilChanged, filter, map, merge, Observable, share, switchMap, tap } from "rxjs";
 import { docsIndex } from "../data/docs-index";
+import { ChatMessagePart, getChatCompletion } from "./chat";
 
 export interface DocumentSuggestion {
   filename: string;
@@ -53,4 +54,39 @@ export async function getDocs(componentNames: string[]) {
   return docs;
 }
 
-export async function compileIcons() {}
+// annotate transcript with @mention of docmented entities
+export async function augmentTranscript(transcript: string) {
+  const chatResponse = await getChatCompletion([
+    {
+      role: "system",
+      content: `Recognize known entities from the transcript. Replace them inline with @mentions.
+
+Known entities:
+"""
+${docsIndex.map((doc) => `@${doc.title}`).join("\n")}
+"""
+
+Respond with the processed transcript with recognized @mentions. If there is no recognized entity, respond with the original transcript.
+    `,
+    },
+    {
+      role: "user",
+      content: "I want to use buttons in a dialog",
+    },
+    {
+      role: "assistant",
+      content: "I want to use @Buttons in a @Dialog",
+    },
+    {
+      role: "user",
+      content: transcript,
+    },
+  ]);
+
+  const parts: ChatMessagePart[] = [];
+  const docMentions = transcript.match(/@(\w+)/g) || [];
+
+  if (transcript.trim()) parts.push({ type: "text", text: chatResponse });
+
+  return { docMentions, parts };
+}

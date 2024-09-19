@@ -7,7 +7,7 @@ import { $ctrlSpaceKeydownRaw, $spaceKeyupRaw } from "./lib/keyboard";
 import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
 import { generateScriptContent, getReactVMCode } from "./lib/react-vm";
-import { getAtMentionedWord, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
+import { augmentTranscript, getAtMentionedWord, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
 import { $draft, $thread, appendMessage, createMessage, updateDraft } from "./lib/thread";
 import { $mediaRecorder, getTranscriber } from "./lib/transcribe";
 import "./main.css";
@@ -70,7 +70,7 @@ const $promptInput = fromEvent(promptTextarea, "input").pipe(
   map((e) => (e.target as HTMLTextAreaElement).value),
   tap((content) => updateDraft((prev) => ({ ...prev, content })))
 );
-const $submitPrompt = fromEvent(promptTextarea, "keydown").pipe(
+const $submitTextPrompt = fromEvent(promptTextarea, "keydown").pipe(
   filter((e) => (e as KeyboardEvent).key === "Enter" && !(e as KeyboardEvent).shiftKey),
   tap((e) => e.preventDefault()),
   concatMap(async (e) => {
@@ -94,8 +94,37 @@ const $submitPrompt = fromEvent(promptTextarea, "keydown").pipe(
   share()
 );
 
-$submitPrompt
+const $latestPrompt = merge($promptInput, $submitTextPrompt.pipe(map((_) => ""))).pipe(distinctUntilChanged());
+const $keyword = $latestPrompt.pipe(map((_) => getAtMentionedWord(promptTextarea)));
+const $suggestions = getSuggestionStream($keyword, matchKeywordToDocs);
+
+const { start, stop, $transcriptions } = getTranscriber();
+fromEvent(holdToTalkButton, "mousedown")
   .pipe(
+    mergeWith($ctrlSpaceKeydownRaw),
+    tap(() => (holdToTalkButton.textContent = "Release Ctrl + Space to submit"))
+  )
+  .subscribe(start);
+fromEvent(holdToTalkButton, "mouseup")
+  .pipe(
+    mergeWith($spaceKeyupRaw),
+    tap(() => (holdToTalkButton.textContent = "Hold Ctrl + Space to talk"))
+  )
+  .subscribe(stop);
+
+const $submitVoicePrompt = $transcriptions.pipe(
+  concatMap((t) => augmentTranscript(t.combinedPhrases[0].text)),
+  filter((submission) => submission.parts.length > 0),
+  map((submission) => {
+    createMessage("user", submission.parts);
+    return submission;
+  }),
+  share()
+);
+
+$submitTextPrompt
+  .pipe(
+    mergeWith($submitVoicePrompt),
     switchMap(async (submission) => {
       const responseId = createMessage("assistant", "");
 
@@ -137,29 +166,6 @@ function renderArtifact(responseId: string) {
     codeElement!.textContent = fullScript;
   }
 }
-
-const $latestPrompt = merge($promptInput, $submitPrompt.pipe(map((_) => ""))).pipe(distinctUntilChanged());
-const $keyword = $latestPrompt.pipe(map((_) => getAtMentionedWord(promptTextarea)));
-const $suggestions = getSuggestionStream($keyword, matchKeywordToDocs);
-
-const { start, stop, $transcriptions } = getTranscriber();
-
-fromEvent(holdToTalkButton, "mousedown")
-  .pipe(
-    mergeWith($ctrlSpaceKeydownRaw),
-    tap(() => (holdToTalkButton.textContent = "Release Ctrl + Space to submit"))
-  )
-  .subscribe(start);
-fromEvent(holdToTalkButton, "mouseup")
-  .pipe(
-    mergeWith($spaceKeyupRaw),
-    tap(() => (holdToTalkButton.textContent = "Hold Ctrl + Space to talk"))
-  )
-  .subscribe(stop);
-
-$transcriptions.subscribe((transcription) => {
-  console.log("transcription", transcription);
-});
 
 /**
  * Delegated action handlers

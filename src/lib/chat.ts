@@ -1,3 +1,4 @@
+import { ChatCompletionCreateParamsNonStreaming } from "openai/resources/index.mjs";
 import { filter, from, map, mergeMap } from "rxjs";
 import { client } from "./azure";
 
@@ -59,4 +60,14 @@ export async function getChatCompletionStream(messages: ChatMessage[]) {
     map((chunk) => chunk.choices[0]?.delta?.content ?? ""),
     filter((content) => !!content)
   );
+}
+
+export async function getChatCompletion(messages: ChatMessage[], options?: Partial<ChatCompletionCreateParamsNonStreaming>) {
+  return client.chat.completions
+    .create({
+      messages: messages as any[],
+      model: "gpt-4o",
+      ...options,
+    })
+    .then((response) => response.choices[0]?.message.content ?? "");
 }

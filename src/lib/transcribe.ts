@@ -41,16 +41,15 @@ export const $mediaRecorder = new BehaviorSubject<MediaRecorder | null>(null);
 
 export function getTranscriber() {
   const $transcriptions = new Subject<TranscribeResult>();
+  const accessTokenAsync = getAzureAccessToken();
 
   async function start() {
-    const accessToken = await getAzureAccessToken();
-
     if (!$mediaRecorder.value) return;
     if ($mediaRecorder.value.state === "recording") return;
     $mediaRecorder.value.start();
 
     transcribe({
-      accessToken,
+      accessToken: await accessTokenAsync,
       mediaRecorder: $mediaRecorder.value,
     }).then((result) => {
       $transcriptions.next(result);
