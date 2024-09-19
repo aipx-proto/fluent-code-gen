@@ -4,7 +4,6 @@ export interface TranscribeOptions {
   locale?: "en-US";
   profanityFilterMode?: "None" | "Masked" | "Removed" | "Tags";
   accessToken: string;
-  region: string;
   mediaRecorder: MediaRecorder;
   onSpeechEnded?: () => void;
   onTextStarted?: () => void;
@@ -39,9 +38,31 @@ export interface TranscribeResult {
 
 export function useTranscription() {
   const $transcriptions = new Subject<TranscribeResult>();
+  let mediaRecorder: MediaRecorder;
 
-  function start() {}
-  function stop() {}
+  async function start() {
+    if (!mediaRecorder) {
+      mediaRecorder = new MediaRecorder(await navigator.mediaDevices.getUserMedia({ audio: true }));
+    }
+    mediaRecorder.start();
+
+    transcribe({
+      accessToken: "",
+      mediaRecorder,
+    }).then((result) => {
+      $transcriptions.next(result);
+    });
+  }
+
+  function stop() {
+    mediaRecorder.stop();
+  }
+
+  return {
+    $transcriptions,
+    start,
+    stop,
+  };
 }
 
 export async function transcribe(options: TranscribeOptions): Promise<TranscribeResult> {
@@ -64,8 +85,6 @@ export async function transcribe(options: TranscribeOptions): Promise<Transcribe
     options.onSpeechEnded?.();
     writer.close();
   };
-
-  mediaRecorder.start();
 
   const boundary = "----WebKitFormBoundary" + Math.random().toString(36).substring(2);
 
