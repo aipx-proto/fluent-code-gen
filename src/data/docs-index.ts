@@ -1,5 +1,7 @@
 import { DocumentSuggestion } from "../lib/suggestion";
 
+const cdkDocsIndex: DocumentSuggestion[] = [{ filename: "cdk-app-shell--docs.md", title: "AppShell" }];
+
 const styleDocsIndex: DocumentSuggestion[] = [{ filename: "styles-icon--docs.md", title: "Icons" }];
 
 const componentDocsIndex: DocumentSuggestion[] = [
@@ -68,4 +70,4 @@ const componentDocsIndex: DocumentSuggestion[] = [
   { filename: "components-table--docs.md", title: "Table" },
 ];
 
-export const docsIndex = [...styleDocsIndex, ...componentDocsIndex];
+export const docsIndex = [...cdkDocsIndex, ...styleDocsIndex, ...componentDocsIndex];

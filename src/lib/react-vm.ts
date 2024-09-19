@@ -19,10 +19,9 @@ export function getReactVMCode(options: GetPreviewOptions) {
     "@fluentui/react-components": "^9.54.13?bundle-deps",
     "@fluentui/react-icons": "^2.0.258?bundle-deps",
     "styled-components": "^6.1.13?bundle-deps",
-    "ai-studio-cdk": "^0.0.5?bundle-deps"
+    "ai-studio-cdk": "^0.0.7?bundle-deps"
   }</script>
-  <!-- <script src="./dist/react-vm.js"></script> -->
-  <script src="https://esm.sh/ai-studio-cdk@0.0.5/dist/react-vm.js?raw" crossorigin></script>
+  <script src="https://esm.sh/ai-studio-cdk@0.0.7/dist/react-vm.js?raw" crossorigin></script>
   <style>
 
   </style>
@@ -42,20 +41,14 @@ ${options.implementation}
 export function generateScriptContent(implementation: string) {
   return `
 import ReactDOM from "react-dom/client";
-import { Shell } from "ai-studio-cdk";
+import { AppShell } from "ai-studio-cdk";
 
 ${implementation}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <FluentProvider theme={webLightTheme}>
-      <Shell>
-        <Shell.Header />
-        <Shell.Nav />
-        <Shell.Main>
-          <App />
-        </Shell.Main>
-      </Shell>
+      <App />
     </FluentProvider>
   </React.StrictMode>
 );

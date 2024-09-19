@@ -87,7 +87,7 @@ const $submitPrompt = fromEvent(promptTextarea, "keydown").pipe(
   share()
 );
 
-const $response = $submitPrompt
+$submitPrompt
   .pipe(
     switchMap(async (submission) => {
       const responseId = createMessage("assistant", "");

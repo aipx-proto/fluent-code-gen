@@ -14,9 +14,12 @@ Now respond in this format:
 import React, { ... } from "react";
 import { FluentProvider, webLightTheme, ... } from "@fluentui/react-components";
 import { ... } from "@fluentui/react-icons"; // needed when using icons
+import { AppShell } from "ai-studio-cdk";
 
 export default function App() {
-  /** Your code here */
+  <AppShell breadcrumbs=["hub-123", "project-123"] activeItem="home">
+    {/* Your implementation here */}
+  </AppShell>
 }
 \`\`\`
   `.trim();
