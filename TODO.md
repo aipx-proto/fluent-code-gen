@@ -16,3 +16,16 @@
 - Cleanup history
 - Side nav customization
 - Top nav customization
+
+# Notes
+
+Diff compression prompt
+
+```txt
+Edit the code based on user's goal. Requirements:
+
+- Only respond with changed code
+- Hide the unchanged code with the comment: `/** lines xx - xx unchanged */`
+- Keep lines unchanged best you can
+- DO NOT show line numbers in the edited code.
+```
