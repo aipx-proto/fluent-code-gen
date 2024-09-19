@@ -1,5 +1,5 @@
 import { filter, from, map, mergeMap } from "rxjs";
-import { client } from "./openai";
+import { client } from "./azure";
 
 export interface OpenAIChatPayload {
   messages: ChatMessage[];

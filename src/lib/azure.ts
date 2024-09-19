@@ -9,6 +9,7 @@ const credential = new InteractiveBrowserCredential({
 const azureADTokenProvider = getBearerTokenProvider(credential, []);
 export const client = new AzureOpenAI({ azureADTokenProvider, apiVersion: "2024-07-01-preview", endpoint: "https://proto-api.azure-api.net" });
 
-export async function signIn() {
-  await azureADTokenProvider();
+export async function getAzureAccessToken() {
+  const token = await azureADTokenProvider();
+  return token;
 }

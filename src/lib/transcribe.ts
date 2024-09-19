@@ -1,4 +1,5 @@
-import { Subject } from "rxjs";
+import { BehaviorSubject, Subject } from "rxjs";
+import { getAzureAccessToken } from "./azure";
 
 export interface TranscribeOptions {
   locale?: "en-US";
@@ -36,26 +37,31 @@ export interface TranscribeResult {
   ];
 }
 
-export function useTranscription() {
+export const $mediaRecorder = new BehaviorSubject<MediaRecorder | null>(null);
+
+export function getTranscriber() {
   const $transcriptions = new Subject<TranscribeResult>();
-  let mediaRecorder: MediaRecorder;
 
   async function start() {
-    if (!mediaRecorder) {
-      mediaRecorder = new MediaRecorder(await navigator.mediaDevices.getUserMedia({ audio: true }));
-    }
-    mediaRecorder.start();
+    const accessToken = await getAzureAccessToken();
+
+    if (!$mediaRecorder.value) return;
+    if ($mediaRecorder.value.state === "recording") return;
+    $mediaRecorder.value.start();
 
     transcribe({
-      accessToken: "",
-      mediaRecorder,
+      accessToken,
+      mediaRecorder: $mediaRecorder.value,
     }).then((result) => {
       $transcriptions.next(result);
     });
   }
 
   function stop() {
-    mediaRecorder.stop();
+    if (!$mediaRecorder.value) return;
+    if ($mediaRecorder.value.state !== "recording") return;
+
+    $mediaRecorder.value?.stop();
   }
 
   return {

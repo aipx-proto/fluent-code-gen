@@ -1,13 +1,15 @@
 import { html, render } from "lit";
 import { repeat } from "lit/directives/repeat.js";
-import { concatMap, distinctUntilChanged, endWith, filter, fromEvent, map, merge, share, switchMap, tap } from "rxjs";
+import { concatMap, distinctUntilChanged, endWith, filter, fromEvent, map, merge, mergeWith, share, switchMap, tap } from "rxjs";
 import { blobToDataUrl } from "./lib/blob";
 import { ChatMessagePart, getChatCompletionStream } from "./lib/chat";
+import { $ctrlSpaceKeydownRaw, $spaceKeyupRaw } from "./lib/keyboard";
 import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
 import { generateScriptContent, getReactVMCode } from "./lib/react-vm";
 import { getAtMentionedWord, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
 import { $draft, $thread, appendMessage, createMessage, updateDraft } from "./lib/thread";
+import { $mediaRecorder, getTranscriber } from "./lib/transcribe";
 import "./main.css";
 
 /**
@@ -20,11 +22,14 @@ const suggestionsElement = $("#suggestions") as HTMLElement;
 const previewIFrame = $("#preview") as HTMLIFrameElement;
 const sourceElement = $("#source") as HTMLPreElement;
 const attachments = $("#attachments") as HTMLElement;
+const useMicrophoneButton = $(`[data-action="use-microphone"]`) as HTMLButtonElement;
+const holdToTalkButton = $(`[data-action="hold-to-talk"]`) as HTMLButtonElement;
 
 /**
  * Handle inputs
  */
 
+// event delegation
 fromEvent(appRoot, "click")
   .pipe(
     tap((e) => {
@@ -34,12 +39,14 @@ fromEvent(appRoot, "click")
         handlePlayerTabSwitch(action);
         handleRemoveAttachment(action, trigger);
         handleClearThread(action);
+        handleUseMicrophone(action);
       }
     })
   )
   .subscribe();
 
-const $pastedFiles = fromEvent(promptTextarea, "paste")
+// pasting
+fromEvent(promptTextarea, "paste")
   .pipe(
     map((e) => (e as ClipboardEvent).clipboardData?.files),
     filter((files) => !!files),
@@ -135,6 +142,25 @@ const $latestPrompt = merge($promptInput, $submitPrompt.pipe(map((_) => ""))).pi
 const $keyword = $latestPrompt.pipe(map((_) => getAtMentionedWord(promptTextarea)));
 const $suggestions = getSuggestionStream($keyword, matchKeywordToDocs);
 
+const { start, stop, $transcriptions } = getTranscriber();
+
+fromEvent(holdToTalkButton, "mousedown")
+  .pipe(
+    mergeWith($ctrlSpaceKeydownRaw),
+    tap(() => (holdToTalkButton.textContent = "Release Ctrl + Space to submit"))
+  )
+  .subscribe(start);
+fromEvent(holdToTalkButton, "mouseup")
+  .pipe(
+    mergeWith($spaceKeyupRaw),
+    tap(() => (holdToTalkButton.textContent = "Hold Ctrl + Space to talk"))
+  )
+  .subscribe(stop);
+
+$transcriptions.subscribe((transcription) => {
+  console.log("transcription", transcription);
+});
+
 /**
  * Delegated action handlers
  */
@@ -167,6 +193,14 @@ function handleRemoveAttachment(action: string, trigger: HTMLElement) {
 function handleClearThread(action: string) {
   if (action !== "clear-thread") return;
   $thread.next([]);
+}
+
+async function handleUseMicrophone(action: string) {
+  if (action !== "use-microphone") return;
+  const media = await navigator.mediaDevices.getUserMedia({ audio: true });
+  $mediaRecorder.next(new MediaRecorder(media));
+  (useMicrophoneButton.dataset as any).hidden = true;
+  (holdToTalkButton.dataset as any).hidden = false;
 }
 
 /**

@@ -18,13 +18,20 @@
     <div class="designer" data-resize="horizontal" style="width: 320px;">
       <div class="straddle">
         Thread
-        <button data-action="clear-thread">Clear</button>
+        <div>
+          <button data-action="clear-thread">Clear</button>
+        </div>
       </div>
       <div id="thread" class="thread"></div>
       <div id="suggestions"></div>
       <div id="attachments" class="thumbnail-grid"></div>
       <textarea name="prompt" class="textarea" data-resize="none" rows="5" autofocus></textarea>
-      <div id="status-bar">...</div>
+      <div id="status-bar">
+        <div id="voice-control">
+          <button data-action="use-microphone">Use microphone</button>
+          <button data-action="hold-to-talk" data-hidden="true">Hold ctrl-space to talk</button>
+        </div>
+      </div>
     </div>
     <div class="player">
       <div>
