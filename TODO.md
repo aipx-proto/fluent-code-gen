@@ -1,7 +1,6 @@
 # TOOD
 
-- Side nav customization
-- Top nav customization
+- Page header customization
 - Source editor with syntax highlight
 - Token counter
 - Undo steps
@@ -16,3 +15,5 @@
 - Source code viewer
 - Paste screenshot
 - Cleanup history
+- Side nav customization
+- Top nav customization
