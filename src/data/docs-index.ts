@@ -1,6 +1,9 @@
 import { DocumentSuggestion } from "../lib/suggestion";
 
-const cdkDocsIndex: DocumentSuggestion[] = [{ filename: "cdk-app-shell--docs.md", title: "AppShell" }];
+const cdkDocsIndex: DocumentSuggestion[] = [
+  { filename: "cdk-app-shell--docs.md", title: "AppShell" },
+  { filename: "cdk-layout--docs.md", title: "Layout" },
+];
 
 const styleDocsIndex: DocumentSuggestion[] = [{ filename: "styles-icon--docs.md", title: "Icons" }];
 
