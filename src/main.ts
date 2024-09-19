@@ -1,6 +1,7 @@
 import { html, render } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 import { concatMap, distinctUntilChanged, endWith, filter, fromEvent, map, merge, mergeWith, share, switchMap, tap } from "rxjs";
+import { $artifacts, updateArtifact } from "./lib/artifact";
 import { blobToDataUrl } from "./lib/blob";
 import { ChatMessagePart, getChatCompletionStream } from "./lib/chat";
 import { $ctrlSpaceKeydownRaw, $spaceKeyupRaw } from "./lib/keyboard";
@@ -132,10 +133,10 @@ $submitTextPrompt
       const docs = await getDocs(docMentions.map((mention) => mention.slice(1)));
       console.log(`Docs in use`, docs);
       const systemPrompt = getCodeGenSystemPrompt({ docs });
-      const $chunks = await getChatCompletionStream([
-        { role: "system", content: systemPrompt },
-        ...$thread.value.map((item) => ({ role: item.role, content: item.content })),
-      ]);
+      const $chunks = await getChatCompletionStream(
+        [{ role: "system", content: systemPrompt }, ...$thread.value.map((item) => ({ role: item.role, content: item.content }))],
+        { temperature: 0 }
+      );
       return { $chunks, responseId };
     }),
     switchMap(({ $chunks, responseId }) =>
@@ -151,6 +152,11 @@ $submitTextPrompt
   )
   .subscribe();
 
+const $activeArtifact = $artifacts.pipe(
+  map((artifacts) => artifacts.find((artifact) => artifact.isActive)),
+  filter((artifact) => !!artifact)
+);
+
 function renderArtifact(responseId: string) {
   // ```jsx
   // ...
@@ -160,10 +166,14 @@ function renderArtifact(responseId: string) {
   const jsxCode = ($thread.value.find((item) => item.id === responseId)?.content as string).match(markdownCodePattern)?.at(1) ?? "";
   if (jsxCode) {
     const fullScript = generateScriptContent(jsxCode);
-    previewIFrame.srcdoc = getReactVMCode({ implementation: fullScript });
-    const codeElement = sourceElement.querySelector("code");
-    codeElement?.setAttribute("data-lang", "jsx");
-    codeElement!.textContent = fullScript;
+    updateArtifact((prev) => [
+      {
+        id: crypto.randomUUID(),
+        source: fullScript,
+        isActive: true,
+      },
+      ...prev,
+    ]);
   }
 }
 
@@ -275,3 +285,6 @@ $draft
     )
   )
   .subscribe((view) => render(view, attachments));
+
+$activeArtifact.pipe(map((artifact) => html`<code data-lang="jsx">${artifact.source}</code>`)).subscribe((view) => render(view, sourceElement));
+$activeArtifact.pipe(map((artifact) => getReactVMCode({ implementation: artifact.source }))).subscribe((reactVMCode) => (previewIFrame.srcdoc = reactVMCode));

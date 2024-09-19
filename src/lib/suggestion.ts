@@ -56,10 +56,11 @@ export async function getDocs(componentNames: string[]) {
 
 // annotate transcript with @mention of docmented entities
 export async function augmentTranscript(transcript: string) {
-  const chatResponse = await getChatCompletion([
-    {
-      role: "system",
-      content: `Recognize known entities from the transcript. Replace them inline with @mentions.
+  const chatResponse = await getChatCompletion(
+    [
+      {
+        role: "system",
+        content: `Recognize known entities from the transcript. Replace them inline with @mentions.
 
 Known entities:
 """
@@ -68,20 +69,24 @@ ${docsIndex.map((doc) => `@${doc.title}`).join("\n")}
 
 Respond with the processed transcript with recognized @mentions. If there is no recognized entity, respond with the original transcript.
     `,
-    },
+      },
+      {
+        role: "user",
+        content: "I want to use buttons in a dialog",
+      },
+      {
+        role: "assistant",
+        content: "I want to use @Buttons in a @Dialog",
+      },
+      {
+        role: "user",
+        content: transcript,
+      },
+    ],
     {
-      role: "user",
-      content: "I want to use buttons in a dialog",
-    },
-    {
-      role: "assistant",
-      content: "I want to use @Buttons in a @Dialog",
-    },
-    {
-      role: "user",
-      content: transcript,
-    },
-  ]);
+      temperature: 0,
+    }
+  );
 
   const parts: ChatMessagePart[] = [];
   const docMentions = transcript.match(/@(\w+)/g) || [];
