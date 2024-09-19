@@ -11,6 +11,7 @@
 
 # DONE
 
+- Voice control
 - Source code viewer
 - Paste screenshot
 - Cleanup history
