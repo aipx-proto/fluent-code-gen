@@ -3,7 +3,7 @@ export interface GetCodeGenSystemPromptOptions {
 }
 export function getCodeGenSystemPrompt(options: GetCodeGenSystemPromptOptions) {
   return `
-Write React program to meet user's goal. Use the provided documentation to implement any @ mentioned component.
+Write React program to meet user's goal. Use the provided documentation to implement any @mentioned component. Do not create or make changes to components that are not @mentioned.
 
 """
 ${options.docs.join("\n\n---\n\n")}
