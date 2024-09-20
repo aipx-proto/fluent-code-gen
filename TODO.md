@@ -3,6 +3,7 @@
 - Handle errors
 - Page header customization
 - Source editor with syntax highlight
+- Auto import docs based on source code
 - Token counter
 - Export as file
 - Export via URL

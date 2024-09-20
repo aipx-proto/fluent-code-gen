@@ -95,9 +95,15 @@ ${transcript.trim()}
   );
 
   const parts: ChatMessagePart[] = [];
-  const docMentions = transcript.match(/@(\w+)/g) || [];
+  const docMentions = getDocMentions(transcript);
 
   if (transcript.trim()) parts.push({ type: "text", text: chatResponse });
 
   return { docMentions, parts };
+}
+
+export function getDocMentions(input: string) {
+  const rawDocMentions = input.match(/@(\w+)/g) || [];
+  const docMentions: string[] = rawDocMentions.map((mention) => mention.slice(1).toLocaleLowerCase());
+  return docMentions;
 }

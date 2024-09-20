@@ -24,7 +24,7 @@ import { $ctrlSpaceKeydownRaw, $spaceKeyupRaw } from "./lib/keyboard";
 import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
 import { generateScriptContent, getReactVMCode } from "./lib/react-vm";
-import { augmentTranscript, getAtMentionedWord, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
+import { augmentTranscript, getAtMentionedWord, getDocMentions, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
 import { $draft, $thread, appendMessage, createMessage, updateDraft, updateThread } from "./lib/thread";
 import { $mediaRecorder, getTranscriber } from "./lib/transcribe";
 import "./main.css";
@@ -98,7 +98,7 @@ const $submitTextPrompt = fromEvent(promptTextarea, "keydown").pipe(
     const attachments = $draft.value.attachments;
     const parts: ChatMessagePart[] = [];
     (e.target as HTMLTextAreaElement).value = "";
-    const docMentions = prompt.match(/@(\w+)/g) || [];
+    const docMentions = getDocMentions(prompt);
 
     if (prompt.trim()) parts.push({ type: "text", text: prompt });
     if (attachments.length) parts.push(...attachments.map((attachment) => ({ type: "image_url" as const, image_url: attachment })));
@@ -156,11 +156,13 @@ $submitTextPrompt
   .pipe(
     mergeWith($submitVoicePrompt),
     withLatestFrom($baseArtifact),
-    switchMap(async ([submission, baseArtifact]) => {
+    switchMap(async ([_submission, baseArtifact]) => {
       const responseId = createMessage("assistant", "");
+      const allDocMentions = $thread.value
+        .flatMap((item) => (Array.isArray(item.content) ? item.content.filter((content) => content.type === "text").map((item) => item.text) : [item.content]))
+        .flatMap(getDocMentions);
 
-      const docMentions = submission.docMentions;
-      const docs = await getDocs(docMentions.map((mention) => mention.slice(1)));
+      const docs = await getDocs(allDocMentions);
       console.log(`Docs in use`, docs);
       const systemPrompt = getCodeGenSystemPrompt({ docs, baseSource: baseArtifact.source });
       const $chunks = await getChatCompletionStream(
