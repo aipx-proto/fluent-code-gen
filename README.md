@@ -4,6 +4,7 @@
 
 - Create an [Entra ID app registration](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app?tabs=certificate)
 - Create an [Azure OpenAI resource](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/create-resource?pivots=web-portal)
+- Create a Speech service in a region that supports [Fast Transcription API](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/fast-transcription-create)
 - Create an [API Management](https://learn.microsoft.com/en-us/azure/api-management/get-started-create-service-instance)
 
 ## Entra ID
