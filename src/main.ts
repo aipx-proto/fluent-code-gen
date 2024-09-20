@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-import { html, render } from "lit";
+import { html, nothing, render } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { combineLatestWith, concatMap, distinctUntilChanged, endWith, filter, fromEvent, map, merge, mergeWith, share, switchMap, tap } from "rxjs";
@@ -275,13 +275,15 @@ function handleRebase(action: string) {
 
 $suggestions
   .pipe(
-    map(
-      (docs) => html`
-        <div>${docs.length} results:</div>
-        <ul>
-          ${docs.map((doc) => html` <li>${doc.title}</li> `)}
-        </ul>
-      `
+    map((docs) =>
+      docs.length
+        ? html`
+            <div>${docs.length} results:</div>
+            <ul>
+              ${docs.map((doc) => html` <li>${doc.title}</li> `)}
+            </ul>
+          `
+        : nothing
     )
   )
   .subscribe((suggestions) => render(suggestions, suggestionsElement));
