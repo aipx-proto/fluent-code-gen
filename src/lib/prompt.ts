@@ -1,26 +1,21 @@
 export interface GetCodeGenSystemPromptOptions {
   docs: string[];
+  baseSource: string;
 }
 export function getCodeGenSystemPrompt(options: GetCodeGenSystemPromptOptions) {
   return `
-Write React program to meet user's goal. Use the provided documentation to implement any @mentioned component. Do not create or make changes to components that are not @mentioned.
+Update the following React program based on user's goal.
+
+\`\`\`jsx
+${options.baseSource}
+\`\`\`
+
+Use the documentation surrounded by triple quotes to implement any @mentioned component. Decline a change when there isn't enough documentation.
 
 """
 ${options.docs.join("\n\n---\n\n")}
 """
 
-Now respond in this format:
-\`\`\`jsx
-import React, { ... } from "react";
-import { AppShell } from "ai-studio-cdk";
-import { ... } from "@fluentui/react-components";
-import { ... } from "@fluentui/react-icons"; // needed when using icons
-
-export default function App() {
-  <AppShell breadcrumbs={["hub-123", "project-123"]} activeItem="home">
-    {/* Your implementation here */}
-  </AppShell>
-}
-\`\`\`
+Respond with your reasoning followed by the updated code.
   `.trim();
 }

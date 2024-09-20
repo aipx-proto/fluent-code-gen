@@ -7,6 +7,7 @@ const blankPage: ArtifactVersion = {
   name: "Blank Page",
   source: generateScriptContent(blankPageJsx.trim()),
   isBase: true,
+  isActive: true,
 };
 
 export const baseArtifacts = [blankPage];

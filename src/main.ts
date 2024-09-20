@@ -2,7 +2,21 @@
 import { html, nothing, render } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
-import { combineLatestWith, concatMap, distinctUntilChanged, endWith, filter, fromEvent, map, merge, mergeWith, share, switchMap, tap } from "rxjs";
+import {
+  combineLatestWith,
+  concatMap,
+  distinctUntilChanged,
+  endWith,
+  filter,
+  fromEvent,
+  map,
+  merge,
+  mergeWith,
+  share,
+  switchMap,
+  tap,
+  withLatestFrom,
+} from "rxjs";
 import { $artifacts, symbolizeArtifact, updateArtifact } from "./lib/artifact";
 import { blobToDataUrl } from "./lib/blob";
 import { ChatMessagePart, getChatCompletionStream } from "./lib/chat";
@@ -128,16 +142,27 @@ const $submitVoicePrompt = $transcriptions.pipe(
   share()
 );
 
+const $baseArtifact = $artifacts.pipe(
+  map((artifacts) => artifacts.find((artifact) => artifact.isBase)),
+  filter((artifact) => !!artifact)
+);
+
+const $activeArtifact = $artifacts.pipe(
+  map((artifacts) => artifacts.find((artifact) => artifact.isActive)),
+  filter((artifact) => !!artifact)
+);
+
 $submitTextPrompt
   .pipe(
     mergeWith($submitVoicePrompt),
-    switchMap(async (submission) => {
+    withLatestFrom($baseArtifact),
+    switchMap(async ([submission, baseArtifact]) => {
       const responseId = createMessage("assistant", "");
 
       const docMentions = submission.docMentions;
       const docs = await getDocs(docMentions.map((mention) => mention.slice(1)));
       console.log(`Docs in use`, docs);
-      const systemPrompt = getCodeGenSystemPrompt({ docs });
+      const systemPrompt = getCodeGenSystemPrompt({ docs, baseSource: baseArtifact.source });
       const $chunks = await getChatCompletionStream(
         [{ role: "system", content: systemPrompt }, ...$thread.value.map((item) => ({ role: item.role, content: item.content }))],
         { temperature: 0 }
@@ -159,25 +184,9 @@ $submitTextPrompt
   )
   .subscribe();
 
-const $activeArtifact = $artifacts.pipe(
-  map((artifacts) => artifacts.find((artifact) => artifact.isActive)),
-  filter((artifact) => !!artifact),
-  share()
-);
-
-const $baseArtifact = $artifacts.pipe(
-  map((artifacts) => artifacts.find((artifact) => artifact.isBase)),
-  filter((artifact) => !!artifact),
-  share()
-);
-
 let artifactVersion = 0;
 function renderArtifact(responseId: string) {
-  // ```jsx
-  // ...
-  // ```
   const markdownCodePattern = /```jsx\n([\s\S]*)\n```/;
-
   const jsxCode = ($thread.value.find((item) => item.id === responseId)?.content as string).match(markdownCodePattern)?.at(1) ?? "";
   if (jsxCode) {
     const fullScript = generateScriptContent(jsxCode);
@@ -303,7 +312,7 @@ $thread
               html`<li>
                 <span class="role">${item.role}:</span>
                 ${item.html
-                  ? html`<div>${unsafeHTML(item.html)}</div> `
+                  ? html`<div data-wrap="pre-wrap">${unsafeHTML(item.html)}</div> `
                   : typeof item.content === "string"
                   ? html` <div data-wrap="pre-wrap">${item.content}</div> `
                   : item.content

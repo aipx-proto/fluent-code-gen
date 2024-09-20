@@ -1,6 +1,5 @@
 # TOOD
 
-- Use base as system prompt
 - Handle errors
 - Page header customization
 - Source editor with syntax highlight
@@ -11,6 +10,7 @@
 
 # DONE
 
+- Use base as system prompt
 - Rebase on previous artifacts
 - Display compressed chat history
 - Re-open artifact
