@@ -2,6 +2,7 @@ import { BehaviorSubject } from "rxjs";
 
 export interface ArtifactVersion {
   id: string;
+  name: string;
   source: string;
   error?: string;
   isActive?: boolean;

@@ -1,5 +1,6 @@
 :root {
   --border-color: #ccc;
+  --panel-header-height: 32px;
 }
 
 *,
@@ -17,18 +18,40 @@ body {
 
 .root-layout {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto 1fr 200px;
   height: 100%;
 }
 
-.designer {
-  /* layout */
+.artifact-list {
   display: grid;
-  grid-template-rows: auto 1fr;
+  overflow-y: auto;
+  height: 100%;
+  align-content: start;
+}
+
+.panel-left,
+.panel-center,
+.panel-right {
+  display: grid;
+  grid-template-rows: var(--panel-header-height) 1fr;
   grid-auto-rows: auto;
 
-  /* style */
+  > :first-child {
+    display: flex;
+    align-items: center;
+    padding: 0 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+}
+
+.panel-left {
   border-right: 1px solid var(--border-color);
+}
+
+.panel-right {
+  border-left: 1px solid var(--border-color);
+
+  min-height: 0;
 }
 
 .thread {
@@ -51,12 +74,6 @@ body {
   }
 }
 
-.player {
-  display: grid;
-  grid-template-rows: auto 1fr;
-  overflow-y: auto;
-}
-
 .player__iframe {
   width: 100%;
   height: 100%;
@@ -65,8 +82,6 @@ body {
 }
 
 .straddle {
-  display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
 }
 

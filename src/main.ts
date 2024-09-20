@@ -25,6 +25,7 @@ const sourceElement = $("#source") as HTMLPreElement;
 const attachments = $("#attachments") as HTMLElement;
 const useMicrophoneButton = $(`[data-action="use-microphone"]`) as HTMLButtonElement;
 const holdToTalkButton = $(`[data-action="hold-to-talk"]`) as HTMLButtonElement;
+const artifactList = $("#artifacts") as HTMLElement;
 
 /**
  * Handle inputs
@@ -41,6 +42,7 @@ fromEvent(appRoot, "click")
         handleRemoveAttachment(action, trigger);
         handleClearThread(action);
         handleUseMicrophone(action);
+        handleOpenArtifact(action, trigger);
       }
     })
   )
@@ -154,9 +156,11 @@ $submitTextPrompt
 
 const $activeArtifact = $artifacts.pipe(
   map((artifacts) => artifacts.find((artifact) => artifact.isActive)),
-  filter((artifact) => !!artifact)
+  filter((artifact) => !!artifact),
+  share()
 );
 
+let artifactVersion = 0;
 function renderArtifact(responseId: string) {
   // ```jsx
   // ...
@@ -167,12 +171,13 @@ function renderArtifact(responseId: string) {
   if (jsxCode) {
     const fullScript = generateScriptContent(jsxCode);
     updateArtifact((prev) => [
+      ...prev.map((artifact) => ({ ...artifact, isActive: false })),
       {
         id: crypto.randomUUID(),
+        name: `Artifact ${++artifactVersion}`,
         source: fullScript,
         isActive: true,
       },
-      ...prev,
     ]);
   }
 }
@@ -217,6 +222,17 @@ async function handleUseMicrophone(action: string) {
   $mediaRecorder.next(new MediaRecorder(media));
   (useMicrophoneButton.dataset as any).hidden = true;
   (holdToTalkButton.dataset as any).hidden = false;
+}
+
+async function handleOpenArtifact(action: string, trigger: HTMLElement) {
+  if (action !== "open-artifact") return;
+  const artifactId = trigger.dataset.artifact as string;
+  updateArtifact((prev) =>
+    prev.map((artifact) => ({
+      ...artifact,
+      isActive: artifact.id === artifactId,
+    }))
+  );
 }
 
 /**
@@ -288,3 +304,17 @@ $draft
 
 $activeArtifact.pipe(map((artifact) => html`<code data-lang="jsx">${artifact.source}</code>`)).subscribe((view) => render(view, sourceElement));
 $activeArtifact.pipe(map((artifact) => getReactVMCode({ implementation: artifact.source }))).subscribe((reactVMCode) => (previewIFrame.srcdoc = reactVMCode));
+$artifacts
+  .pipe(
+    map(
+      (artifacts) =>
+        html`
+          ${repeat(
+            artifacts,
+            (artifact) => artifact.id,
+            (artifact) => html`<button data-action="open-artifact" data-artifact="${artifact.id}">${artifact.name}</button>`
+          )}
+        `
+    )
+  )
+  .subscribe((artifacts) => render(artifacts, artifactList));

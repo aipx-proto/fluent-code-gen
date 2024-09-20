@@ -8,6 +8,7 @@
 - Adjust documentation position in thread
 - Export as file
 - Export via URL
+- Ease resize handle
 
 # DONE
 

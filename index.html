@@ -15,7 +15,7 @@
 
 <body>
   <div id="app" class="root-layout">
-    <div class="designer" data-resize="horizontal" style="width: 320px;">
+    <div class="panel-left" data-resize="horizontal" style="width: 320px;">
       <div class="straddle">
         Thread
         <div>
@@ -33,7 +33,7 @@
         </div>
       </div>
     </div>
-    <div class="player">
+    <div class="panel-center player">
       <div>
         <button data-action="open-preview">Preview</button>
         <button data-action="open-source">Source</button>
@@ -42,6 +42,10 @@
       </div>
       <iframe class="player__iframe" data-active-tab="true" id="preview"></iframe>
       <pre data-active-tab="false" id="source"></pre>
+    </div>
+    <div class="panel-right">
+      <div>Versions</div>
+      <div id="artifacts" class="artifact-list"></div>
     </div>
   </div>
   <script type="module" src="/src/main.ts"></script>
