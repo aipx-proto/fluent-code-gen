@@ -41,8 +41,7 @@ ${options.implementation}
 export function generateScriptContent(implementation: string) {
   return `
 import ReactDOM from "react-dom/client";
-import { AppShell } from "ai-studio-cdk";
-
+import { FluentProvider, webLightTheme } from "@fluentui/react-components";
 ${implementation}
 
 ReactDOM.createRoot(document.getElementById('root')).render(

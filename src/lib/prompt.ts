@@ -12,12 +12,12 @@ ${options.docs.join("\n\n---\n\n")}
 Now respond in this format:
 \`\`\`jsx
 import React, { ... } from "react";
-import { FluentProvider, webLightTheme, ... } from "@fluentui/react-components";
-import { ... } from "@fluentui/react-icons"; // needed when using icons
 import { AppShell } from "ai-studio-cdk";
+import { ... } from "@fluentui/react-components";
+import { ... } from "@fluentui/react-icons"; // needed when using icons
 
 export default function App() {
-  <AppShell breadcrumbs=["hub-123", "project-123"] activeItem="home">
+  <AppShell breadcrumbs={["hub-123", "project-123"]} activeItem="home">
     {/* Your implementation here */}
   </AppShell>
 }

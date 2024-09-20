@@ -1,7 +1,8 @@
+/// <reference lib="webworker" />
 import { html, render } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
-import { concatMap, distinctUntilChanged, endWith, filter, fromEvent, map, merge, mergeWith, share, switchMap, tap } from "rxjs";
+import { combineLatestWith, concatMap, distinctUntilChanged, endWith, filter, fromEvent, map, merge, mergeWith, share, switchMap, tap } from "rxjs";
 import { $artifacts, symbolizeArtifact, updateArtifact } from "./lib/artifact";
 import { blobToDataUrl } from "./lib/blob";
 import { ChatMessagePart, getChatCompletionStream } from "./lib/chat";
@@ -44,6 +45,7 @@ fromEvent(appRoot, "click")
         handleClearThread(action);
         handleUseMicrophone(action);
         handleOpenArtifact(action, trigger);
+        handleRebase(action);
       }
     })
   )
@@ -163,6 +165,12 @@ const $activeArtifact = $artifacts.pipe(
   share()
 );
 
+const $baseArtifact = $artifacts.pipe(
+  map((artifacts) => artifacts.find((artifact) => artifact.isBase)),
+  filter((artifact) => !!artifact),
+  share()
+);
+
 let artifactVersion = 0;
 function renderArtifact(responseId: string) {
   // ```jsx
@@ -180,7 +188,7 @@ function renderArtifact(responseId: string) {
       ...prev.map((artifact) => ({ ...artifact, isActive: false })),
       {
         id: artifactId,
-        name: `Artifact ${currentArtifactVersion}`,
+        name: `Revision ${currentArtifactVersion}`,
         source: fullScript,
         isActive: true,
       },
@@ -189,7 +197,7 @@ function renderArtifact(responseId: string) {
     updateThread((prev) =>
       prev.map((item) =>
         item.id === responseId
-          ? { ...item, html: symbolizeArtifact({ content: item.content as string, id: artifactId, version: currentArtifactVersion }) }
+          ? { ...item, html: symbolizeArtifact({ content: item.content as string, id: artifactId, name: `Revision ${currentArtifactVersion}` }) }
           : item
       )
     );
@@ -249,6 +257,18 @@ async function handleOpenArtifact(action: string, trigger: HTMLElement) {
   );
 }
 
+function handleRebase(action: string) {
+  if (action !== "rebase") return;
+
+  updateArtifact((prev) =>
+    prev.map((artifact) => ({
+      ...artifact,
+      isBase: artifact.isActive,
+    }))
+  );
+  handleClearThread("clear-thread");
+}
+
 /**
  * Render outputs
  */
@@ -268,38 +288,40 @@ $suggestions
 
 $thread
   .pipe(
-    map(
-      (thread) =>
-        html`
-          <ul>
-            ${repeat(
-              thread,
-              (item) => item.id,
-              (item) =>
-                html`<li>
-                  <span class="role">${item.role}:</span>
-                  ${item.html
-                    ? html`<div>${unsafeHTML(item.html)}</div> `
-                    : typeof item.content === "string"
-                    ? html` <div data-wrap="pre-wrap">${item.content}</div> `
-                    : item.content
-                        .filter((item) => item.type === "text")
-                        .map((item) => item.text)
-                        .join("")}
-                  ${Array.isArray(item.content)
-                    ? html`
-                        <div class="thumbnail-grid">
-                          ${item.content
-                            .filter((part) => part.type === "image_url")
-                            .map((part) => html`<div class="thumbnail-grid__item"><img class="thumbnail" src=${part.image_url.url} alt="attachment" /></div>`)}
-                        </div>
-                      `
-                    : ""}
-                </li>`
-            )}
-          </ul>
-        `
-    )
+    combineLatestWith($baseArtifact),
+    map(([thread, baseArtifact]) => {
+      return html`
+        <span class="role">Base:</span>
+        <button data-action="open-artifact" data-artifact=${baseArtifact?.id}>${baseArtifact?.name ?? "?"}</button>
+        <ul>
+          ${repeat(
+            thread,
+            (item) => item.id,
+            (item) =>
+              html`<li>
+                <span class="role">${item.role}:</span>
+                ${item.html
+                  ? html`<div>${unsafeHTML(item.html)}</div> `
+                  : typeof item.content === "string"
+                  ? html` <div data-wrap="pre-wrap">${item.content}</div> `
+                  : item.content
+                      .filter((item) => item.type === "text")
+                      .map((item) => item.text)
+                      .join("")}
+                ${Array.isArray(item.content)
+                  ? html`
+                      <div class="thumbnail-grid">
+                        ${item.content
+                          .filter((part) => part.type === "image_url")
+                          .map((part) => html`<div class="thumbnail-grid__item"><img class="thumbnail" src=${part.image_url.url} alt="attachment" /></div>`)}
+                      </div>
+                    `
+                  : ""}
+              </li>`
+          )}
+        </ul>
+      `;
+    })
   )
   .subscribe((thread) => render(thread, threadElement));
 
