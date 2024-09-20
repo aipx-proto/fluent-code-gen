@@ -10,7 +10,7 @@
 
 Entra ID -> App registration -> SPA Redirect URI: add `http://localhost:5200`
 
-## API Management service
+## OpenAI API Management service
 
 Follow [this documentation](https://learn.microsoft.com/en-us/azure/api-management/azure-openai-api-from-specification) to create the API managment
 
@@ -40,6 +40,45 @@ Follow [this documentation](https://learn.microsoft.com/en-us/azure/api-manageme
       <expose-headers>
         <header>*</header>
       </expose-headers>
+    </cors>
+    <base />
+  </inbound>
+  <backend>
+    <base />
+  </backend>
+  <outbound>
+    <base />
+  </outbound>
+  <on-error>
+    <base />
+  </on-error>
+</policies>
+```
+
+## Fast Transcripotion API Management service
+
+```xml
+<policies>
+  <inbound>
+    <validate-azure-ad-token tenant-id="{{replace_with_your_tenant_id}}">
+      <client-application-ids>
+        <application-id>{{replace_with_your_client_id}}</application-id>
+      </client-application-ids>
+    </validate-azure-ad-token>
+    <set-header name="Ocp-Apim-Subscription-Key" exists-action="override">
+      <value>{{EastUSSpeechKey}}</value>
+    </set-header>
+    <cors>
+      <allowed-origins>
+        <origin>*</origin>
+      </allowed-origins>
+      <allowed-methods>
+        <method>GET</method>
+        <method>POST</method>
+      </allowed-methods>
+      <allowed-headers>
+        <header>*</header>
+      </allowed-headers>
     </cors>
     <base />
   </inbound>
