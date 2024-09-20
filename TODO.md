@@ -1,18 +1,18 @@
 # TOOD
 
-- Display compressed chat history
-- Rebase on previous artifacts
+- Use base as system prompt
 - Handle errors
 - Page header customization
 - Source editor with syntax highlight
 - Token counter
-- Adjust documentation position in thread
 - Export as file
 - Export via URL
 - Ease resize handle
 
 # DONE
 
+- Rebase on previous artifacts
+- Display compressed chat history
 - Re-open artifact
 - Voice control
 - Source code viewer
