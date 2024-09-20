@@ -5,6 +5,7 @@ export interface ThreadItem {
   id: string;
   role: string;
   content: ChatMessage["content"];
+  html?: string;
 }
 
 export const $thread = new BehaviorSubject<ThreadItem[]>([]);
@@ -23,7 +24,7 @@ export function appendMessage(id: string, delta: string) {
   });
 }
 
-function updateThread(updateFn: (prev: ThreadItem[]) => ThreadItem[]) {
+export function updateThread(updateFn: (prev: ThreadItem[]) => ThreadItem[]) {
   $thread.next(updateFn($thread.value));
 }
 

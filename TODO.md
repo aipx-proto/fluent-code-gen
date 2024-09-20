@@ -1,6 +1,7 @@
 # TOOD
 
-- Re-open and rebase on previous artifacts
+- Display compressed chat history
+- Rebase on previous artifacts
 - Handle errors
 - Page header customization
 - Source editor with syntax highlight
@@ -12,6 +13,7 @@
 
 # DONE
 
+- Re-open artifact
 - Voice control
 - Source code viewer
 - Paste screenshot

@@ -1,7 +1,8 @@
 import { html, render } from "lit";
 import { repeat } from "lit/directives/repeat.js";
+import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { concatMap, distinctUntilChanged, endWith, filter, fromEvent, map, merge, mergeWith, share, switchMap, tap } from "rxjs";
-import { $artifacts, updateArtifact } from "./lib/artifact";
+import { $artifacts, symbolizeArtifact, updateArtifact } from "./lib/artifact";
 import { blobToDataUrl } from "./lib/blob";
 import { ChatMessagePart, getChatCompletionStream } from "./lib/chat";
 import { $ctrlSpaceKeydownRaw, $spaceKeyupRaw } from "./lib/keyboard";
@@ -9,7 +10,7 @@ import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
 import { generateScriptContent, getReactVMCode } from "./lib/react-vm";
 import { augmentTranscript, getAtMentionedWord, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
-import { $draft, $thread, appendMessage, createMessage, updateDraft } from "./lib/thread";
+import { $draft, $thread, appendMessage, createMessage, updateDraft, updateThread } from "./lib/thread";
 import { $mediaRecorder, getTranscriber } from "./lib/transcribe";
 import "./main.css";
 
@@ -149,7 +150,9 @@ $submitTextPrompt
     ),
     tap((item) => {
       if (!item.end) appendMessage(item.responseId, item.chunk);
-      else renderArtifact(item.responseId);
+      else {
+        renderArtifact(item.responseId);
+      }
     })
   )
   .subscribe();
@@ -170,15 +173,26 @@ function renderArtifact(responseId: string) {
   const jsxCode = ($thread.value.find((item) => item.id === responseId)?.content as string).match(markdownCodePattern)?.at(1) ?? "";
   if (jsxCode) {
     const fullScript = generateScriptContent(jsxCode);
+    const artifactId = crypto.randomUUID();
+    const currentArtifactVersion = ++artifactVersion;
+
     updateArtifact((prev) => [
       ...prev.map((artifact) => ({ ...artifact, isActive: false })),
       {
-        id: crypto.randomUUID(),
-        name: `Artifact ${++artifactVersion}`,
+        id: artifactId,
+        name: `Artifact ${currentArtifactVersion}`,
         source: fullScript,
         isActive: true,
       },
     ]);
+
+    updateThread((prev) =>
+      prev.map((item) =>
+        item.id === responseId
+          ? { ...item, html: symbolizeArtifact({ content: item.content as string, id: artifactId, version: currentArtifactVersion }) }
+          : item
+      )
+    );
   }
 }
 
@@ -264,7 +278,9 @@ $thread
               (item) =>
                 html`<li>
                   <span class="role">${item.role}:</span>
-                  ${typeof item.content === "string"
+                  ${item.html
+                    ? html`<div>${unsafeHTML(item.html)}</div> `
+                    : typeof item.content === "string"
                     ? html` <div data-wrap="pre-wrap">${item.content}</div> `
                     : item.content
                         .filter((item) => item.type === "text")

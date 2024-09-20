@@ -60,7 +60,7 @@ export async function augmentTranscript(transcript: string) {
     [
       {
         role: "system",
-        content: `Recognize known entities from the transcript. Replace them inline with @mentions.
+        content: `Recognize known entities from the transcript surrounded by triple quotes. Replace them inline with @mentions.
 
 Known entities:
 """
@@ -72,7 +72,10 @@ Respond with the processed transcript with recognized @mentions. If there is no 
       },
       {
         role: "user",
-        content: "I want to use buttons in a dialog",
+        content: `Transcript:
+"""
+I want to use buttons in a dialog
+"""`,
       },
       {
         role: "assistant",
@@ -80,7 +83,10 @@ Respond with the processed transcript with recognized @mentions. If there is no 
       },
       {
         role: "user",
-        content: transcript,
+        content: ` Transcript:
+"""
+${transcript.trim()}
+"""`,
       },
     ],
     {
