@@ -17,16 +17,22 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs";
+import { handleClearThread } from "./handlers/handle-clear-thread";
+import { handleOpenArtifact } from "./handlers/handle-open-artifact";
+import { handlePlayerTabSwitch } from "./handlers/handle-player-tab-switch";
+import { handleRebase } from "./handlers/handle-rebase";
+import { handleRemoveAttachment } from "./handlers/handle-remove-attachment";
+import { handleUseMicrophone } from "./handlers/handle-use-microphone";
 import { $artifacts, symbolizeArtifact, updateArtifact } from "./lib/artifact";
 import { blobToDataUrl } from "./lib/blob";
 import { ChatMessagePart, getChatCompletionStream } from "./lib/chat";
 import { $ctrlSpaceKeydownRaw, $spaceKeyupRaw } from "./lib/keyboard";
 import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
-import { generateScriptContent, getReactVMCode } from "./lib/react-vm";
+import { getReactVMErrorHtml, getReactVMHtml, getReactVMJsx } from "./lib/react-vm";
 import { augmentTranscript, getAtMentionedWord, getDocMentions, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
 import { $draft, $thread, appendMessage, createMessage, updateDraft, updateThread } from "./lib/thread";
-import { $mediaRecorder, getTranscriber } from "./lib/transcribe";
+import { getTranscriber } from "./lib/transcribe";
 import "./main.css";
 
 /**
@@ -42,6 +48,7 @@ const attachments = $("#attachments") as HTMLElement;
 const useMicrophoneButton = $(`[data-action="use-microphone"]`) as HTMLButtonElement;
 const holdToTalkButton = $(`[data-action="hold-to-talk"]`) as HTMLButtonElement;
 const artifactList = $("#artifacts") as HTMLElement;
+const debugButton = $("#debug-button") as HTMLButtonElement;
 
 /**
  * Handle inputs
@@ -54,12 +61,12 @@ fromEvent(appRoot, "click")
       const trigger = (e.target as HTMLElement)?.closest("[data-action]") as HTMLElement;
       const action = trigger?.getAttribute("data-action");
       if (action) {
-        handlePlayerTabSwitch(action);
-        handleRemoveAttachment(action, trigger);
-        handleClearThread(action);
-        handleUseMicrophone(action);
-        handleOpenArtifact(action, trigger);
-        handleRebase(action);
+        handlePlayerTabSwitch(action, previewIFrame, sourceElement);
+        handleRemoveAttachment(action, trigger, updateDraft);
+        handleClearThread(action, $thread);
+        handleUseMicrophone(action, useMicrophoneButton, holdToTalkButton);
+        handleOpenArtifact(action, trigger, updateArtifact);
+        handleRebase(action, $thread, updateArtifact);
       }
     })
   )
@@ -191,7 +198,7 @@ function renderArtifact(responseId: string) {
   const markdownCodePattern = /```jsx\n([\s\S]*)\n```/;
   const jsxCode = ($thread.value.find((item) => item.id === responseId)?.content as string).match(markdownCodePattern)?.at(1) ?? "";
   if (jsxCode) {
-    const fullScript = generateScriptContent(jsxCode);
+    const fullScript = getReactVMJsx(jsxCode);
     const artifactId = crypto.randomUUID();
     const currentArtifactVersion = ++artifactVersion;
 
@@ -215,70 +222,33 @@ function renderArtifact(responseId: string) {
   }
 }
 
-/**
- * Delegated action handlers
- */
-function handlePlayerTabSwitch(action: string) {
-  if (action !== "open-preview" && action !== "open-source") return;
-  switch (action) {
-    case "open-preview": {
-      previewIFrame.dataset.activeTab = "true";
-      sourceElement.dataset.activeTab = "false";
-      break;
-    }
-    case "open-source": {
-      previewIFrame.dataset.activeTab = "false";
-      sourceElement.dataset.activeTab = "true";
-      break;
-    }
-  }
-}
+// global errors
+const $globalErrors = fromEvent<MessageEvent>(window, "message").pipe(
+  filter((event) => event.source === previewIFrame.contentWindow),
+  filter((event) => event.data.type === "error"),
+  map((event) => ({
+    data: event.data,
+    artifactId: ((event.source as Window)?.frameElement as HTMLIFrameElement)?.dataset.artifactId,
+  })),
+  tap(({ data, artifactId }) => {
+    console.log(data);
+    updateArtifact((prev) =>
+      prev.map((artifact) =>
+        artifact.id === artifactId
+          ? {
+              ...artifact,
+              error: {
+                message: data.message,
+                error: data.error,
+              },
+            }
+          : artifact
+      )
+    );
+  })
+);
 
-function handleRemoveAttachment(action: string, trigger: HTMLElement) {
-  if (action !== "remove-attachment") return;
-  const attachmentUrl = trigger.querySelector("img")?.src;
-
-  updateDraft((prev) => ({
-    ...prev,
-    attachments: prev.attachments.filter((attachment) => attachment.url !== attachmentUrl),
-  }));
-}
-
-function handleClearThread(action: string) {
-  if (action !== "clear-thread") return;
-  $thread.next([]);
-}
-
-async function handleUseMicrophone(action: string) {
-  if (action !== "use-microphone") return;
-  const media = await navigator.mediaDevices.getUserMedia({ audio: true });
-  $mediaRecorder.next(new MediaRecorder(media));
-  (useMicrophoneButton.dataset as any).hidden = true;
-  (holdToTalkButton.dataset as any).hidden = false;
-}
-
-async function handleOpenArtifact(action: string, trigger: HTMLElement) {
-  if (action !== "open-artifact") return;
-  const artifactId = trigger.dataset.artifact as string;
-  updateArtifact((prev) =>
-    prev.map((artifact) => ({
-      ...artifact,
-      isActive: artifact.id === artifactId,
-    }))
-  );
-}
-
-function handleRebase(action: string) {
-  if (action !== "rebase") return;
-
-  updateArtifact((prev) =>
-    prev.map((artifact) => ({
-      ...artifact,
-      isBase: artifact.isActive,
-    }))
-  );
-  handleClearThread("clear-thread");
-}
+$globalErrors.subscribe();
 
 /**
  * Render outputs
@@ -354,7 +324,15 @@ $draft
   .subscribe((view) => render(view, attachments));
 
 $activeArtifact.pipe(map((artifact) => html`<code data-lang="jsx">${artifact.source}</code>`)).subscribe((view) => render(view, sourceElement));
-$activeArtifact.pipe(map((artifact) => getReactVMCode({ implementation: artifact.source }))).subscribe((reactVMCode) => (previewIFrame.srcdoc = reactVMCode));
+$activeArtifact
+  .pipe(
+    tap((artifact) => (previewIFrame.dataset.artifactId = artifact.id)),
+    tap((artifact) => (debugButton.disabled = !artifact.error)),
+    map((artifact) => (artifact.error ? getReactVMErrorHtml(artifact.error) : getReactVMHtml({ implementation: artifact.source }))),
+    tap((reactVMCode) => (previewIFrame.srcdoc = reactVMCode))
+  )
+  .subscribe();
+
 $artifacts
   .pipe(
     map(

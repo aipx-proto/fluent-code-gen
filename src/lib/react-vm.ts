@@ -1,7 +1,7 @@
 export interface GetPreviewOptions {
   implementation: string;
 }
-export function getReactVMCode(options: GetPreviewOptions) {
+export function getReactVMHtml(options: GetPreviewOptions) {
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -19,9 +19,9 @@ export function getReactVMCode(options: GetPreviewOptions) {
     "@fluentui/react-components": "^9.54.13?bundle-deps",
     "@fluentui/react-icons": "^2.0.258?bundle-deps",
     "styled-components": "^6.1.13?bundle-deps",
-    "ai-studio-cdk": "^0.0.7?bundle-deps"
+    "ai-studio-cdk": "^0.0.9?bundle-deps"
   }</script>
-  <script src="https://esm.sh/ai-studio-cdk@0.0.7/dist/react-vm.js?raw" crossorigin></script>
+  <script src="https://esm.sh/ai-studio-cdk@0.0.9/dist/react-vm.js?raw" crossorigin></script>
   <style>
 
   </style>
@@ -38,7 +38,35 @@ ${options.implementation}
   `;
 }
 
-export function generateScriptContent(implementation: string) {
+export interface ReactVMErrorMessage {
+  message: string;
+  error?: {
+    message?: string;
+    stack?: string;
+  };
+}
+export function getReactVMErrorHtml(consoleError: ReactVMErrorMessage) {
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Auto IDE</title>
+  <style></style>
+</head>
+
+<body>
+   <pre><code>${consoleError.message}</code></pre>
+   <pre><code>${consoleError.error?.message}</code></pre>
+   <pre></code>${consoleError.error?.stack}</code></pre>
+</body>
+
+</html>
+  `;
+}
+
+export function getReactVMJsx(implementation: string) {
   return `
 import ReactDOM from "react-dom/client";
 import { FluentProvider, webLightTheme } from "@fluentui/react-components";

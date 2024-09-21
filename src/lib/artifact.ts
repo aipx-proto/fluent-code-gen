@@ -1,11 +1,12 @@
 import { BehaviorSubject } from "rxjs";
 import { baseArtifacts } from "../data/base-artifacts";
+import { ReactVMErrorMessage } from "./react-vm";
 
 export interface ArtifactVersion {
   id: string;
   name: string;
   source: string;
-  error?: string;
+  error?: ReactVMErrorMessage;
   isActive?: boolean;
   isBase?: boolean;
 }
@@ -20,7 +21,7 @@ export function symbolizeArtifact(options: { id: string; name: string; content: 
   const markdownCodePattern = /```jsx\n([\s\S]*)\n```/g;
 
   // replace ```jsx ``` block with <pre><code data-length="num">[length of code] </code></pre>
-  return `${options.content.replace(markdownCodePattern, (_match, code) => {
+  return `${options.content.replace(markdownCodePattern, (_match, _code) => {
     return `<button data-action="open-artifact" data-artifact="${options.id}">${options.name}</button>`;
   })}`;
 }
