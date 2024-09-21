@@ -1,5 +1,7 @@
 # TeachingPopover
 
+An extension class of Popover which defaults to withArrow and FocusTrap enabled.
+
 ```jsx
 import * as React from "react";
 import { Button, Image } from "@fluentui/react-components";

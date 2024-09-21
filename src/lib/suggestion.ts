@@ -4,6 +4,7 @@ import { ChatMessagePart, getChatCompletion } from "./chat";
 
 export interface DocumentSuggestion {
   filename: string;
+  description: string;
   title: string;
 }
 export function getSuggestionStream<T>($keyword: Observable<string>, onMatch: (keyword: string) => Promise<T[]>): Observable<T[]> {

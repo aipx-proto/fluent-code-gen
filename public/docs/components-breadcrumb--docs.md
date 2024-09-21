@@ -1,5 +1,7 @@
 # Breadcrumb
 
+For detailed guidance on when and how to use this component, go to Fluent 2 Breadcrumbs.
+
 ```jsx
 import * as React from "react";
 import {

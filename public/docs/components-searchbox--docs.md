@@ -1,5 +1,7 @@
 # SearchBox
 
+[data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}import { SearchBox } from '@fluentui/react-components';Copy The SearchBox component allows the users to access information with ease, providing flexibility and the ability to clear and filter the search.
+
 ```jsx
 import * as React from "react";
 import type { ArgTypes } from "@storybook/react";

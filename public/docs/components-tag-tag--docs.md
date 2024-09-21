@@ -1,5 +1,7 @@
 # Tag
 
+A Tag provides a visual representation of an attribute, person, or asset.
+
 ```jsx
 import * as React from "react";
 import { Tag, TagProps } from "@fluentui/react-components";

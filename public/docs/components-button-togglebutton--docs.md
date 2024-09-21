@@ -1,5 +1,7 @@
 # ToggleButton
 
+A toggle button is a button that can be checked on and off.
+
 ```jsx
 import * as React from "react";
 import { ToggleButton } from "@fluentui/react-components";

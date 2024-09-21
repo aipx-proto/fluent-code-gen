@@ -1,5 +1,7 @@
 # CardHeader
 
+The CardHeader component, used inside of a Card, represents a Fluent UI compliant card header.
+
 ```jsx
 import * as React from "react";
 import { CardHeader } from "@fluentui/react-components";

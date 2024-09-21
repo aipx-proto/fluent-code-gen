@@ -1,5 +1,7 @@
 # Badge
 
+A badge is a visual decoration for UI elements. Different badges can display different content. Badge displays text and/or an iconCounterBadge displays numerical valuesPresenceBadge displays status
+
 ```jsx
 import * as React from "react";
 

@@ -1,5 +1,7 @@
 # Text
 
+Typography and styling abstraction component used to ensure consistency and standardize text throughout your application.
+
 ```jsx
 import * as React from "react";
 import { Text } from "@fluentui/react-components";

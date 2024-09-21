@@ -1,5 +1,7 @@
 # Image
 
+An image displays graphical content such as a photo or illustration.
+
 ```jsx
 import * as React from "react";
 import { Image } from "@fluentui/react-components";

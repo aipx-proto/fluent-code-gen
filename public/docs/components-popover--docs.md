@@ -1,5 +1,7 @@
 # Popover
 
+A popover displays content on top of other content.
+
 ```jsx
 import * as React from "react";
 import {

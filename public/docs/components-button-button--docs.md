@@ -1,5 +1,7 @@
 # Button
 
+A button triggers an action or event when activated.
+
 ```jsx
 import * as React from "react";
 import { Button } from "@fluentui/react-components";

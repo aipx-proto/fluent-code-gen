@@ -1,5 +1,8 @@
 # Checkbox
 
+Checkboxes give people a way to select one or more items from a group,
+or switch between two mutually exclusive options (checked or unchecked).
+
 ```jsx
 import * as React from "react";
 import { Checkbox } from "@fluentui/react-components";

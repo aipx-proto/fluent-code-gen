@@ -1,5 +1,7 @@
 # TagGroup
 
+A TagGroup is a container for multiple controls that are Tag or InteractionTag.
+
 ```jsx
 import * as React from "react";
 import {

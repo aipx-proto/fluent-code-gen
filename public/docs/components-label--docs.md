@@ -1,5 +1,7 @@
 # Label
 
+A label provides a name or title for an input.
+
 ```jsx
 import * as React from "react";
 import { Label } from "@fluentui/react-components";

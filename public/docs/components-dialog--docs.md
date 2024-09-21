@@ -1,5 +1,7 @@
 # Dialog
 
+Dialog is a window overlaid on either the primary window or another dialog window. Windows under a modal dialog are inert. That is, users cannot interact with content outside an active dialog window. Inert content outside an active dialog is typically visually obscured or dimmed so it is difficult to discern, and in some implementations, attempts to interact with the inert content cause the dialog to close. Best practices Do Dialog boxes consist of a header (DialogTitle), content (DialogContent), and footer (DialogActions), which should all be included inside a body (DialogBody).Validate that people’s entries are acceptable before closing the dialog. Show an inline validation error near the field they must correct.Modal dialogs should be used very sparingly—only when it’s critical that people make a choice or provide information before they can proceed. Thee dialogs are generally used for irreversible or potentially destructive tasks. They’re typically paired with an backdrop without a light dismiss.Add a aria-describedby attribute on DialogSurface pointing to the dialog content on short confirmation like dialogs.Add a aria-label or aria-labelledby attribute on DialogSurface if there is no DialogTitle Don't Don't use more than three buttons between DialogActions.Don't open a Dialog from a DialogDon't use a Dialog with no focusable elements
+
 ```jsx
 import * as React from "react";
 import {

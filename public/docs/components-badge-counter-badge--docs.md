@@ -1,5 +1,7 @@
 # Counter Badge
 
+A counter badge is a badge that displays a numerical count.
+
 ```jsx
 import * as React from "react";
 

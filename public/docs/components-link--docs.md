@@ -1,5 +1,7 @@
 # Link
 
+Links allow users to navigate between different locations. They can be used as standalone controls or inline with text.
+
 ```jsx
 import * as React from "react";
 import { Link } from "@fluentui/react-components";

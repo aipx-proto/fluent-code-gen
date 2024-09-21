@@ -1,5 +1,8 @@
 # toMountNodeProps
 
+Fluent UI uses a wrapper component called Portal to render portals using ReactDOM.createPortal().
+Portal component accepts a mountNode prop that can be used to specify the DOM node where the portal should be rendered. That prop also accepts an object that allows to configure rendering of a mount node. For example, you can pass className to add a class to the mount node: To ensure that props normalization is consistent across all components, we use toMountNodeProps function to normalize mountNode prop. This function is used internally by Portal component, but it can be also used to build custom components that accept mountNode prop.
+
 ```jsx
 import * as React from "react";
 

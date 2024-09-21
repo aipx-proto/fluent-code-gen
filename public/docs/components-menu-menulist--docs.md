@@ -1,5 +1,7 @@
 # MenuList
 
+A menu list displays a list of actions. It is usually rendered inside of the Menu component.
+
 ```jsx
 import * as React from "react";
 import {

@@ -1,5 +1,7 @@
 # Textarea
 
+Textarea allows the user to enter and edit multiline text.
+
 ```jsx
 import * as React from "react";
 import { Field, Textarea } from "@fluentui/react-components";

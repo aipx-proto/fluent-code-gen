@@ -1,5 +1,7 @@
 # CardPreview
 
+The CardPreview component, used inside of a Card, allows the user to better visualize what the card's contents are.
+
 ```jsx
 import * as React from "react";
 import { CardPreview } from "@fluentui/react-components";

@@ -1,5 +1,7 @@
 # Persona
 
+A Persona is a visual representation of a person or status that showcases an Avatar, PresenceBadge, or an Avatar with a PresenceBadge.
+
 ```jsx
 import * as React from "react";
 import { Persona } from "@fluentui/react-components";

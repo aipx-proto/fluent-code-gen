@@ -1,5 +1,7 @@
 # Slider
 
+A Slider represents an input that allows user to choose a value from within a specific range.
+
 ```jsx
 import * as React from "react";
 import { useId, Label, Slider } from "@fluentui/react-components";

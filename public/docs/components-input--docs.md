@@ -1,5 +1,7 @@
 # Input
 
+Input allows the user to enter and edit text.
+
 ```jsx
 import * as React from "react";
 import type { ArgTypes } from "@storybook/react";

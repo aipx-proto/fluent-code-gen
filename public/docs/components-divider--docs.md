@@ -1,5 +1,7 @@
 # Divider
 
+A divider visually separates two pieces of content.
+
 ```jsx
 import * as React from "react";
 import { makeStyles, tokens, Divider } from "@fluentui/react-components";
