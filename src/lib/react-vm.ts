@@ -1,3 +1,5 @@
+import type { ReactVMErrorMessage } from "ai-studio-cdk/react-vm";
+
 export interface GetPreviewOptions {
   implementation: string;
 }
@@ -38,13 +40,6 @@ ${options.implementation}
   `;
 }
 
-export interface ReactVMErrorMessage {
-  message: string;
-  error?: {
-    message?: string;
-    stack?: string;
-  };
-}
 export function getReactVMErrorHtml(consoleError: ReactVMErrorMessage) {
   return `
 <!DOCTYPE html>

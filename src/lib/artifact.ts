@@ -1,6 +1,6 @@
+import type { ReactVMErrorMessage } from "ai-studio-cdk/react-vm";
 import { BehaviorSubject } from "rxjs";
 import { baseArtifacts } from "../data/base-artifacts";
-import { ReactVMErrorMessage } from "./react-vm";
 
 export interface ArtifactVersion {
   id: string;
