@@ -3,9 +3,11 @@ import { html, nothing, render } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import {
+  BehaviorSubject,
   combineLatestWith,
   concatMap,
   distinctUntilChanged,
+  distinctUntilKeyChanged,
   endWith,
   filter,
   fromEvent,
@@ -23,13 +25,13 @@ import { handlePlayerTabSwitch } from "./handlers/handle-player-tab-switch";
 import { handleRebase } from "./handlers/handle-rebase";
 import { handleRemoveAttachment } from "./handlers/handle-remove-attachment";
 import { handleUseMicrophone } from "./handlers/handle-use-microphone";
-import { $artifacts, symbolizeArtifact, updateArtifact } from "./lib/artifact";
+import { $artifacts, ArtifactVersion, symbolizeArtifact, updateArtifact } from "./lib/artifact";
 import { blobToDataUrl } from "./lib/blob";
 import { ChatMessagePart, getChatCompletionStream } from "./lib/chat";
 import { $ctrlSpaceKeydownRaw, $spaceKeyupRaw } from "./lib/keyboard";
 import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
-import { getReactVMErrorHtml, getReactVMHtml, getReactVMJsx } from "./lib/react-vm";
+import { getReactVMHtml, getReactVMJsx } from "./lib/react-vm";
 import { augmentTranscript, getAtMentionedWord, getDocMentions, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
 import { $draft, $thread, appendMessage, createMessage, updateDraft, updateThread } from "./lib/thread";
 import { getTranscriber } from "./lib/transcribe";
@@ -72,6 +74,23 @@ fromEvent(appRoot, "click")
   )
   .subscribe();
 
+const $submitDebugPrompt = fromEvent(debugButton, "click").pipe(map((e) => handleAutoDebug($artifacts)));
+
+export function handleAutoDebug($artifacts: BehaviorSubject<ArtifactVersion[]>) {
+  const error = $artifacts.value.find((artifact) => artifact.isActive && artifact.error)?.error;
+  if (!error) return;
+
+  const formattedError = `
+I received the following error
+"""
+${[error.message, error.error?.message, error.error?.stack].filter(Boolean).join("\n")}
+"""
+  `.trim();
+
+  createMessage("user", formattedError);
+  return { parts: [formattedError] };
+}
+
 // pasting
 fromEvent(promptTextarea, "paste")
   .pipe(
@@ -105,12 +124,11 @@ const $submitTextPrompt = fromEvent(promptTextarea, "keydown").pipe(
     const attachments = $draft.value.attachments;
     const parts: ChatMessagePart[] = [];
     (e.target as HTMLTextAreaElement).value = "";
-    const docMentions = getDocMentions(prompt);
 
     if (prompt.trim()) parts.push({ type: "text", text: prompt });
     if (attachments.length) parts.push(...attachments.map((attachment) => ({ type: "image_url" as const, image_url: attachment })));
 
-    return { docMentions, parts };
+    return { parts };
   }),
   filter((submission) => submission.parts.length > 0),
   map((submission) => {
@@ -161,9 +179,10 @@ const $activeArtifact = $artifacts.pipe(
 
 $submitTextPrompt
   .pipe(
-    mergeWith($submitVoicePrompt),
+    tap((_) => console.log("submitted")),
+    mergeWith($submitVoicePrompt, $submitDebugPrompt),
     withLatestFrom($baseArtifact),
-    switchMap(async ([_submission, baseArtifact]) => {
+    switchMap(async ([_, baseArtifact]) => {
       const responseId = createMessage("assistant", "");
       const allDocMentions = $thread.value
         .flatMap((item) => (Array.isArray(item.content) ? item.content.filter((content) => content.type === "text").map((item) => item.text) : [item.content]))
@@ -231,7 +250,6 @@ const $globalErrors = fromEvent<MessageEvent>(window, "message").pipe(
     artifactId: ((event.source as Window)?.frameElement as HTMLIFrameElement)?.dataset.artifactId,
   })),
   tap(({ data, artifactId }) => {
-    console.log(data);
     updateArtifact((prev) =>
       prev.map((artifact) =>
         artifact.id === artifactId
@@ -328,7 +346,8 @@ $activeArtifact
   .pipe(
     tap((artifact) => (previewIFrame.dataset.artifactId = artifact.id)),
     tap((artifact) => (debugButton.disabled = !artifact.error)),
-    map((artifact) => (artifact.error ? getReactVMErrorHtml(artifact.error) : getReactVMHtml({ implementation: artifact.source }))),
+    distinctUntilKeyChanged("id"),
+    map((artifact) => getReactVMHtml({ implementation: artifact.source })),
     tap((reactVMCode) => (previewIFrame.srcdoc = reactVMCode))
   )
   .subscribe();

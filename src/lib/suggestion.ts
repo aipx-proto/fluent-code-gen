@@ -95,11 +95,9 @@ ${transcript.trim()}
   );
 
   const parts: ChatMessagePart[] = [];
-  const docMentions = getDocMentions(transcript);
-
   if (transcript.trim()) parts.push({ type: "text", text: chatResponse });
 
-  return { docMentions, parts };
+  return { parts };
 }
 
 export function getDocMentions(input: string) {
