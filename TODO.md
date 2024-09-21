@@ -1,6 +1,5 @@
 # TOOD
 
-- Handle errors
 - Base versions with Page header, full width, and clamped with
 - Source editor with syntax highlight
 - Auto import docs based on source code
@@ -11,6 +10,7 @@
 
 # DONE
 
+- Handle errors
 - Use base as system prompt
 - Rebase on previous artifacts
 - Display compressed chat history
