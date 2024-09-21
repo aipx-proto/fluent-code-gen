@@ -3,7 +3,7 @@ import { docsIndex } from "../data/docs-index";
 import { ChatMessagePart, getChatCompletion } from "./chat";
 
 export interface DocumentSuggestion {
-  filename: string;
+  path: string;
   description: string;
   title: string;
 }
@@ -50,7 +50,7 @@ export async function getDocs(componentNames: string[]) {
     uniqueLowercaseNames
       .map((title) => docsDict.get(title)!)
       .filter(Boolean)
-      .map((filename) => fetch(`/docs/${filename.filename}`).then((res) => res.text()))
+      .map((filename) => fetch(`/${filename.path}`).then((res) => res.text()))
   );
   return docs;
 }
@@ -61,14 +61,14 @@ export async function augmentTranscript(transcript: string) {
     [
       {
         role: "system",
-        content: `Recognize known entities from the transcript surrounded by triple quotes. Replace them inline with @mentions.
+        content: `Find the most relevant documentation based on transcript surrounded by triple quotes
 
-Known entities:
+Available documentation:
 """
-${docsIndex.map((doc) => `@${doc.title}`).join("\n")}
+${docsIndex.map((doc) => `@${doc.title}: ${doc.description}`).join("\n")}
 """
 
-Respond with the processed transcript with recognized @mentions. If there is no recognized entity, respond with the original transcript.
+Respond with the same transcript, followed by @mention of documentation titles. If there is no matching documentation, say "none provided".
     `,
       },
       {
@@ -80,8 +80,31 @@ I want to use buttons in a dialog
       },
       {
         role: "assistant",
-        content: "I want to use @Buttons in a @Dialog",
+        content: `I want to use buttons in a dialog. Docs: @button, @dialog`,
       },
+      {
+        role: "user",
+        content: `Transcript: 
+"""
+Change app breadcrumb in header
+"""`,
+      },
+      {
+        role: "assistant",
+        content: "Change app breadcrumb in header. Docs: @AppShell",
+      },
+      {
+        role: "user",
+        content: `Transcript: 
+"""
+Make everything bigger
+"""`,
+      },
+      {
+        role: "assistant",
+        content: "Make everything bigger. Docs: none provided.",
+      },
+
       {
         role: "user",
         content: ` Transcript:
