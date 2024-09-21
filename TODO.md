@@ -1,6 +1,5 @@
 # TOOD
 
-- Rich docs for Fluent react
 - Base versions with Page header, full width, and clamped with
 - Source editor with syntax highlight
 - Auto import docs based on source code
@@ -8,9 +7,11 @@
 - Export as file
 - Export via URL
 - Ease resize handle
+- Patch Text documentation to avoid using the "as=" pattern
 
 # DONE
 
+- Rich docs for Fluent react
 - Handle errors
 - Use base as system prompt
 - Rebase on previous artifacts
