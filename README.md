@@ -58,6 +58,8 @@ Follow [this documentation](https://learn.microsoft.com/en-us/azure/api-manageme
 
 ## Fast Transcripotion API Management service
 
+Make sure to enable HTTP/2 protocol support in the API Management. Search for `protocol` to find the relevant settting.
+
 ```xml
 <policies>
   <inbound>
