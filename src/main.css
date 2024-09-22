@@ -72,6 +72,7 @@ body {
   overflow-y: auto;
   scrollbar-gutter: stable;
   padding: 1rem;
+  word-break: break-word;
 
   ul {
     /* layout */

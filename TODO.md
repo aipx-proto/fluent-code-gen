@@ -1,5 +1,6 @@
 # TOOD
 
+- "Counter Badge" cannot have space in component name
 - Up arrow to get history input
 - Base versions with Page header, full width, and clamped with
 - Add previous chat context for RAG entity recognition
