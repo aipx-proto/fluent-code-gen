@@ -1,19 +1,19 @@
 # TOOD
 
-- Voice interop with chat: clear chat and attachment. Use attachment
-- Add previous chat context for RAG entity recognition
+- Up arrow to get history input
+- Abort chat
 - Heal from React VM Compiler Error (require vm refactor)
 - Base versions with Page header, full width, and clamped with
+- Add previous chat context for RAG entity recognition
 - Auto import docs based on source code
 - Token counter
 - Export via URL
 - Ease resize handle
 - Patch Text documentation to avoid using the "as=" pattern
-- Up arrow to get history input
-- Abort chat
 
 # DONE
 
+- Voice interop with chat: clear chat and attachment. Use attachment
 - Export as file
 - Source editor with syntax highlight
 - Rich docs for Fluent react

@@ -2,7 +2,7 @@
 import { html, nothing, render } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
-import { combineLatestWith, distinctUntilKeyChanged, endWith, filter, fromEvent, map, merge, mergeWith, share, switchMap, tap, withLatestFrom } from "rxjs";
+import { combineLatestWith, distinctUntilKeyChanged, endWith, filter, fromEvent, map, merge, mergeWith, switchMap, tap, withLatestFrom } from "rxjs";
 import { createDebugPrompt } from "./handlers/handle-auto-debug";
 import { handleClearThread } from "./handlers/handle-clear-thread";
 import { handleExport } from "./handlers/handle-export";
@@ -120,41 +120,31 @@ fromEvent(holdToTalkButton, "mouseup")
 // text submission -> draft
 const $submitText = fromEvent(promptTextarea, "keydown").pipe(
   filter((e) => (e as KeyboardEvent).key === "Enter" && !(e as KeyboardEvent).shiftKey),
-  tap((e) => e.preventDefault()),
-  map((_) => submitDraft(promptTextarea)),
-  filter((submission) => submission !== null),
-  switchMap(async ({ id, parts }) => {
-    const augmented = await augmentChat(parts);
-    return { id, parts: augmented.parts };
-  }),
-  tap(({ id, parts }) => updateThread((prev) => prev.map((item) => (item.id === id ? { ...item, content: parts } : item)))),
-  share()
+  tap((e) => e.preventDefault())
 );
 
 // voice submission -> draft
 const $submitVoice = $transcriptions.pipe(
-  tap((transcript) => updateDraft((prev) => ({ ...prev, content: prev.content + " " + transcript.combinedPhrases[0].text }))),
-  map((_) => submitDraft(promptTextarea)),
-  filter((submission) => submission !== null),
-  switchMap(async ({ id, parts }) => {
-    const augmented = await augmentChat(parts);
-    return { id, parts: augmented.parts };
-  }),
-  tap(({ id, parts }) => updateThread((prev) => prev.map((item) => (item.id === id ? { ...item, content: parts } : item)))),
-  share()
+  tap((transcript) => updateDraft((prev) => ({ ...prev, content: prev.content + " " + transcript.combinedPhrases[0].text })))
 );
 
 // debug submission -> draft
 const $submitDebug = fromEvent(debugButton, "click").pipe(
   map((_e) => createDebugPrompt($artifacts)),
   filter((formattedError) => formattedError !== undefined),
-  tap((formattedError) => updateDraft((prev) => ({ ...prev, content: formattedError }))),
-  map((_) => submitDraft(promptTextarea))
+  tap((formattedError) => updateDraft((prev) => ({ ...prev, content: formattedError })))
 );
 
 // draft -> docs -> chat completion -> thread
 merge($submitText, $submitVoice, $submitDebug)
   .pipe(
+    map((_) => submitDraft(promptTextarea)),
+    filter((submission) => submission !== null),
+    switchMap(async ({ id, parts }) => {
+      const augmented = await augmentChat(parts);
+      return { id, parts: augmented.parts };
+    }),
+    tap(({ id, parts }) => updateThread((prev) => prev.map((item) => (item.id === id ? { ...item, content: parts } : item)))),
     withLatestFrom($baseArtifact),
     switchMap(async ([_, baseArtifact]) => {
       const responseId = createMessage("assistant", "");
