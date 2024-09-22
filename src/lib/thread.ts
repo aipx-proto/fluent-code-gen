@@ -34,13 +34,14 @@ export function endMessage(id: string) {
   });
 }
 
-export function abortUserMessage(id: string) {
-  const userMessage = $thread.value.find((item) => item.id === id && !item.isEnded);
-  if (!userMessage) return;
+export function abortRunningMessage() {
+  const runningUserMessage = $thread.value.find((item) => !item.isEnded && item.role === "user");
+  if (!runningUserMessage) return;
 
-  userMessage?.abortController?.abort();
+  runningUserMessage?.abortController?.abort();
+
   updateThread((prev) => {
-    const removeFromIndex = prev.findIndex((item) => item.id === id);
+    const removeFromIndex = prev.indexOf(runningUserMessage);
     if (removeFromIndex === -1) return prev;
     return prev.filter((_, index) => index < removeFromIndex);
   });

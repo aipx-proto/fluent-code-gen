@@ -6,6 +6,7 @@ export interface TranscribeOptions {
   profanityFilterMode?: "None" | "Masked" | "Removed" | "Tags";
   accessToken: string;
   mediaRecorder: MediaRecorder;
+  signal?: AbortSignal;
   onSpeechEnded?: () => void;
   onTextStarted?: () => void;
 }
@@ -43,17 +44,24 @@ export function getTranscriber() {
   const $transcriptions = new Subject<TranscribeResult>();
   const accessTokenAsync = getAzureAccessToken();
 
+  let abortController: AbortController;
+
   async function start() {
     if (!$mediaRecorder.value) return;
     if ($mediaRecorder.value.state === "recording") return;
     $mediaRecorder.value.start();
 
+    abortController = new AbortController();
+
     transcribe({
       accessToken: await accessTokenAsync,
       mediaRecorder: $mediaRecorder.value,
-    }).then((result) => {
-      $transcriptions.next(result);
-    });
+      signal: abortController.signal,
+    })
+      .then((result) => {
+        $transcriptions.next(result);
+      })
+      .catch((e) => console.log("Transcribe handled error", e));
   }
 
   function stop() {
@@ -63,10 +71,15 @@ export function getTranscriber() {
     $mediaRecorder.value?.stop();
   }
 
+  function cancel() {
+    abortController?.abort();
+  }
+
   return {
     $transcriptions,
     start,
     stop,
+    cancel,
   };
 }
 
@@ -137,6 +150,7 @@ export async function transcribe(options: TranscribeOptions): Promise<Transcribe
     // @ts-expect-error, ref: https://github.com/node-fetch/node-fetch/issues/1769
     duplex: "half",
     body: bodyStream,
+    signal: options.signal,
   });
 
   const result = await response.json();

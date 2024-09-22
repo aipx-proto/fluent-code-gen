@@ -14,7 +14,6 @@ import {
   mergeWith,
   Observable,
   share,
-  Subject,
   switchMap,
   tap,
   withLatestFrom,
@@ -40,7 +39,7 @@ import {
   $draft,
   $draftDistinctContent,
   $thread,
-  abortUserMessage,
+  abortRunningMessage,
   appendMessage,
   createMessage,
   endMessage,
@@ -121,10 +120,11 @@ const $keyword = $draftDistinctContent.pipe(map((_) => getAtMentionedWord(prompt
 const $suggestions = getSuggestionStream($keyword, matchKeywordToDocs);
 
 // keyboard + mic -> transcription
-const { start, stop, $transcriptions } = getTranscriber();
+const { start, stop, $transcriptions, cancel: cancelTranscription } = getTranscriber();
 fromEvent(holdToTalkButton, "mousedown")
   .pipe(
     mergeWith($ctrlSpaceKeydownRaw),
+    tap(() => abortRunningMessage()),
     tap(() => (holdToTalkButton.textContent = "Release Ctrl + Space to submit"))
   )
   .subscribe(start);
@@ -134,8 +134,6 @@ fromEvent(holdToTalkButton, "mouseup")
     tap(() => (holdToTalkButton.textContent = "Hold Ctrl + Space to talk"))
   )
   .subscribe(stop);
-
-const $abortRequest = new Subject<string>(); // id of the user message to abort
 
 const $keydown = fromEvent(promptTextarea, "keydown").pipe(share());
 
@@ -149,11 +147,12 @@ const $submitText = $keydown.pipe(
 $keydown
   .pipe(
     filter((e) => (e as KeyboardEvent).key === "Escape" && !(e as KeyboardEvent).isComposing),
+    tap(cancelTranscription), // transcript can be cancelled without any user message in the UI
     // emit last user message id from the thread
     map(() => $thread.value.filter((item) => item.role === "user").at(-1)?.id ?? null),
     filter((id) => id !== null),
     distinctUntilChanged(), // abort only once
-    tap(abortUserMessage)
+    tap(abortRunningMessage)
   )
   .subscribe();
 
@@ -211,7 +210,7 @@ merge($submitText, $submitVoice, $submitDebug)
       if (!item.end) {
         appendMessage(item.responseId, item.chunk);
       } else {
-        endMessage(item.responseId);
+        endMessage(item.submission.id);
         renderArtifact(item.responseId);
       }
     })

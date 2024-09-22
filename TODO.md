@@ -1,7 +1,6 @@
 # TOOD
 
 - Up arrow to get history input
-- Abort chat
 - Heal from React VM Compiler Error (require vm refactor)
 - Base versions with Page header, full width, and clamped with
 - Add previous chat context for RAG entity recognition
@@ -10,9 +9,11 @@
 - Export via URL
 - Ease resize handle
 - Patch Text documentation to avoid using the "as=" pattern
+- Use proper markdown parser
 
 # DONE
 
+- Abort chat
 - Voice interop with chat: clear chat and attachment. Use attachment
 - Export as file
 - Source editor with syntax highlight
