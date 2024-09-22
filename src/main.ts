@@ -3,7 +3,6 @@ import { html, nothing, render } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import {
-  BehaviorSubject,
   combineLatestWith,
   distinctUntilChanged,
   distinctUntilKeyChanged,
@@ -18,20 +17,22 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs";
+import { handleAutoDebug } from "./handlers/handle-auto-debug";
 import { handleClearThread } from "./handlers/handle-clear-thread";
+import { handleExport } from "./handlers/handle-export";
 import { handleOpenArtifact } from "./handlers/handle-open-artifact";
 import { handlePlayerTabSwitch } from "./handlers/handle-player-tab-switch";
 import { handleRebase } from "./handlers/handle-rebase";
 import { handleRemoveAttachment } from "./handlers/handle-remove-attachment";
 import { handleUseMicrophone } from "./handlers/handle-use-microphone";
-import { $artifacts, ArtifactVersion, symbolizeArtifact, updateArtifact } from "./lib/artifact";
+import { $artifacts, symbolizeArtifact, updateArtifact } from "./lib/artifact";
 import { blobToDataUrl } from "./lib/blob";
 import { ChatMessagePart, getChatCompletionStream } from "./lib/chat";
 import { mountArtifactEditor } from "./lib/editor";
 import { $ctrlSpaceKeydownRaw, $spaceKeyupRaw } from "./lib/keyboard";
 import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
-import { getReactVMHtml, getReactVMJsx } from "./lib/react-vm";
+import { getReactVMHtml } from "./lib/react-vm";
 import { augmentChat, augmentTranscript, getAtMentionedWord, getDocMentions, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
 import { $draft, $thread, appendMessage, createMessage, updateDraft, updateThread } from "./lib/thread";
 import { getTranscriber } from "./lib/transcribe";
@@ -82,37 +83,7 @@ fromEvent(appRoot, "click")
   )
   .subscribe();
 
-function handleExport(action: string, $artifacts: BehaviorSubject<ArtifactVersion[]>) {
-  if (action !== "export") return;
-  const artifacts = $artifacts.value;
-  const artifact = artifacts.find((artifact) => artifact.isActive);
-  if (!artifact) return;
-  const fullHtml = getReactVMHtml({ implementation: getReactVMJsx(artifact.minimumCode) });
-  const blob = new Blob([fullHtml], { type: "text/html" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${artifact.name}-${new Date().toISOString()}.html`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-const $submitDebugPrompt = fromEvent(debugButton, "click").pipe(map((e) => handleAutoDebug($artifacts)));
-
-export function handleAutoDebug($artifacts: BehaviorSubject<ArtifactVersion[]>) {
-  const error = $artifacts.value.find((artifact) => artifact.isActive && artifact.error)?.error;
-  if (!error) return;
-
-  const formattedError = `
-I received the following error
-"""
-${[error.message, error.error?.message, error.error?.stack].filter(Boolean).join("\n")}
-"""
-  `.trim();
-
-  createMessage("user", formattedError);
-  return { parts: [formattedError] };
-}
+const $submitDebugPrompt = fromEvent(debugButton, "click").pipe(map((_e) => handleAutoDebug($artifacts)));
 
 // pasting
 fromEvent(promptTextarea, "paste")
