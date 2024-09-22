@@ -135,7 +135,7 @@ const $submitText = $keydown.pipe(
 // text escape -> abort
 $keydown
   .pipe(
-    filter((e) => (e as KeyboardEvent).key === "Escape"),
+    filter((e) => (e as KeyboardEvent).key === "Escape" && !(e as KeyboardEvent).isComposing),
     // emit last user message id from the thread
     map(() => $thread.value.filter((item) => item.role === "user").at(-1)?.id ?? null),
     filter((id) => id !== null),
