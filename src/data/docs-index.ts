@@ -27,7 +27,7 @@ const stylesDocsIndex: DocumentSuggestion[] = [
 const componentDocsIndex: DocumentSuggestion[] = [
   {
     path: "fluent/components-badge-counter-badge--docs.md",
-    title: "Counter Badge",
+    title: "CounterBadge",
     description: "A counter badge is a badge that displays a numerical count.",
   },
   {
