@@ -1,5 +1,7 @@
 # TOOD
 
+- Voice interop with chat: clear chat and attachment. Use attachment
+- Add previous chat context for RAG entity recognition
 - Heal from React VM Compiler Error (require vm refactor)
 - Base versions with Page header, full width, and clamped with
 - Auto import docs based on source code
