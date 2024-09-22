@@ -2,21 +2,7 @@
 import { html, nothing, render } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
-import {
-  combineLatestWith,
-  distinctUntilChanged,
-  distinctUntilKeyChanged,
-  endWith,
-  filter,
-  fromEvent,
-  map,
-  merge,
-  mergeWith,
-  share,
-  switchMap,
-  tap,
-  withLatestFrom,
-} from "rxjs";
+import { combineLatestWith, distinctUntilKeyChanged, endWith, filter, fromEvent, map, merge, mergeWith, share, switchMap, tap, withLatestFrom } from "rxjs";
 import { createDebugPrompt } from "./handlers/handle-auto-debug";
 import { handleClearThread } from "./handlers/handle-clear-thread";
 import { handleExport } from "./handlers/handle-export";
@@ -25,7 +11,7 @@ import { handlePlayerTabSwitch } from "./handlers/handle-player-tab-switch";
 import { handleRebase } from "./handlers/handle-rebase";
 import { handleRemoveAttachment } from "./handlers/handle-remove-attachment";
 import { handleUseMicrophone } from "./handlers/handle-use-microphone";
-import { $artifacts, symbolizeArtifact, updateArtifact } from "./lib/artifact";
+import { $activeArtifact, $artifacts, $baseArtifact, symbolizeArtifact, updateArtifact } from "./lib/artifact";
 import { blobToDataUrl } from "./lib/blob";
 import { getChatCompletionStream } from "./lib/chat";
 import { mountArtifactEditor } from "./lib/editor";
@@ -34,7 +20,7 @@ import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
 import { getReactVMHtml } from "./lib/react-vm";
 import { augmentChat, getAtMentionedWord, getDocMentions, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
-import { $draft, $thread, appendMessage, createMessage, submitDraft, updateDraft, updateThread } from "./lib/thread";
+import { $draft, $draftDistinctContent, $thread, appendMessage, createMessage, submitDraft, updateDraft, updateThread } from "./lib/thread";
 import { getTranscriber } from "./lib/transcribe";
 import "./main.css";
 
@@ -112,26 +98,11 @@ fromEvent(promptTextarea, "input")
   )
   .subscribe();
 
-const $submitText = fromEvent(promptTextarea, "keydown").pipe(
-  filter((e) => (e as KeyboardEvent).key === "Enter" && !(e as KeyboardEvent).shiftKey),
-  tap((e) => e.preventDefault()),
-  map((_) => submitDraft(promptTextarea)),
-  filter((submission) => submission !== null),
-  switchMap(async ({ id, parts }) => {
-    const augmented = await augmentChat(parts);
-    return { id, parts: augmented.parts };
-  }),
-  tap(({ id, parts }) => updateThread((prev) => prev.map((item) => (item.id === id ? { ...item, content: parts } : item)))),
-  share()
-);
-
-const $latestPrompt = $draft.pipe(
-  map((draft) => draft.content),
-  distinctUntilChanged()
-);
-const $keyword = $latestPrompt.pipe(map((_) => getAtMentionedWord(promptTextarea)));
+// draft -> suggestion
+const $keyword = $draftDistinctContent.pipe(map((_) => getAtMentionedWord(promptTextarea)));
 const $suggestions = getSuggestionStream($keyword, matchKeywordToDocs);
 
+// keyboard + mic -> transcription
 const { start, stop, $transcriptions } = getTranscriber();
 fromEvent(holdToTalkButton, "mousedown")
   .pipe(
@@ -146,6 +117,21 @@ fromEvent(holdToTalkButton, "mouseup")
   )
   .subscribe(stop);
 
+// text submission -> draft
+const $submitText = fromEvent(promptTextarea, "keydown").pipe(
+  filter((e) => (e as KeyboardEvent).key === "Enter" && !(e as KeyboardEvent).shiftKey),
+  tap((e) => e.preventDefault()),
+  map((_) => submitDraft(promptTextarea)),
+  filter((submission) => submission !== null),
+  switchMap(async ({ id, parts }) => {
+    const augmented = await augmentChat(parts);
+    return { id, parts: augmented.parts };
+  }),
+  tap(({ id, parts }) => updateThread((prev) => prev.map((item) => (item.id === id ? { ...item, content: parts } : item)))),
+  share()
+);
+
+// voice submission -> draft
 const $submitVoice = $transcriptions.pipe(
   tap((transcript) => updateDraft((prev) => ({ ...prev, content: prev.content + " " + transcript.combinedPhrases[0].text }))),
   map((_) => submitDraft(promptTextarea)),
@@ -158,6 +144,7 @@ const $submitVoice = $transcriptions.pipe(
   share()
 );
 
+// debug submission -> draft
 const $submitDebug = fromEvent(debugButton, "click").pipe(
   map((_e) => createDebugPrompt($artifacts)),
   filter((formattedError) => formattedError !== undefined),
@@ -165,16 +152,7 @@ const $submitDebug = fromEvent(debugButton, "click").pipe(
   map((_) => submitDraft(promptTextarea))
 );
 
-const $baseArtifact = $artifacts.pipe(
-  map((artifacts) => artifacts.find((artifact) => artifact.isBase)),
-  filter((artifact) => !!artifact)
-);
-
-const $activeArtifact = $artifacts.pipe(
-  map((artifacts) => artifacts.find((artifact) => artifact.isActive)),
-  filter((artifact) => !!artifact)
-);
-
+// draft -> docs -> chat completion -> thread
 merge($submitText, $submitVoice, $submitDebug)
   .pipe(
     withLatestFrom($baseArtifact),

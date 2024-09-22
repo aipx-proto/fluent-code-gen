@@ -1,5 +1,5 @@
 import type { ReactVMErrorMessage } from "ai-studio-cdk/react-vm";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, filter, map } from "rxjs";
 import { baseArtifacts } from "../data/base-artifacts";
 
 export interface ArtifactVersion {
@@ -12,6 +12,16 @@ export interface ArtifactVersion {
 }
 
 export const $artifacts = new BehaviorSubject<ArtifactVersion[]>([...baseArtifacts]);
+
+export const $baseArtifact = $artifacts.pipe(
+  map((artifacts) => artifacts.find((artifact) => artifact.isBase)),
+  filter((artifact) => !!artifact)
+);
+
+export const $activeArtifact = $artifacts.pipe(
+  map((artifacts) => artifacts.find((artifact) => artifact.isActive)),
+  filter((artifact) => !!artifact)
+);
 
 export function updateArtifact(updateFn: (prev: ArtifactVersion[]) => ArtifactVersion[]) {
   $artifacts.next(updateFn($artifacts.value));

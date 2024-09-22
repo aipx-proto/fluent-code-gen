@@ -1,4 +1,4 @@
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, distinctUntilChanged, map } from "rxjs";
 import { ChatMessage, ChatMessagePart } from "./chat";
 
 export interface ThreadItem {
@@ -33,6 +33,10 @@ export interface Draft {
   attachments: { name: string; url: string }[];
 }
 export const $draft = new BehaviorSubject<Draft>({ content: "", attachments: [] });
+export const $draftDistinctContent = $draft.pipe(
+  map((draft) => draft.content),
+  distinctUntilChanged()
+);
 
 export function updateDraft(updateFn: (prev: Draft) => Draft) {
   $draft.next({ ...$draft.value, ...updateFn($draft.value) });
