@@ -75,8 +75,8 @@ export function submitDraft(textarea: HTMLTextAreaElement): { id: string; parts:
   if (attachments.length) parts.push(...attachments.map((attachment) => ({ type: "image_url" as const, image_url: attachment })));
 
   if (parts.length) {
+    textarea.value = ""; // order matters. Clear it first so the DOM is aligned with the state
     updateDraft(() => ({ content: "", attachments: [] }));
-    textarea.value = "";
 
     const abortController = new AbortController();
     const id = createMessage("user", parts, abortController);
