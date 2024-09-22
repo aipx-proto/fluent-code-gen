@@ -10,7 +10,6 @@ import {
   filter,
   fromEvent,
   map,
-  merge,
   mergeWith,
   share,
   switchMap,
@@ -27,14 +26,14 @@ import { handleRemoveAttachment } from "./handlers/handle-remove-attachment";
 import { handleUseMicrophone } from "./handlers/handle-use-microphone";
 import { $artifacts, symbolizeArtifact, updateArtifact } from "./lib/artifact";
 import { blobToDataUrl } from "./lib/blob";
-import { ChatMessagePart, getChatCompletionStream } from "./lib/chat";
+import { getChatCompletionStream } from "./lib/chat";
 import { mountArtifactEditor } from "./lib/editor";
 import { $ctrlSpaceKeydownRaw, $spaceKeyupRaw } from "./lib/keyboard";
 import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
 import { getReactVMHtml } from "./lib/react-vm";
 import { augmentChat, augmentTranscript, getAtMentionedWord, getDocMentions, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
-import { $draft, $thread, appendMessage, createMessage, updateDraft, updateThread } from "./lib/thread";
+import { $draft, $thread, appendMessage, createMessage, submitDraft, updateDraft, updateThread } from "./lib/thread";
 import { getTranscriber } from "./lib/transcribe";
 import "./main.css";
 
@@ -106,31 +105,19 @@ fromEvent(promptTextarea, "paste")
   )
   .subscribe();
 
-const $promptInput = fromEvent(promptTextarea, "input").pipe(
-  map((e) => (e.target as HTMLTextAreaElement).value),
-  tap((content) => updateDraft((prev) => ({ ...prev, content })))
-);
+// keyboard input -> draft
+fromEvent(promptTextarea, "input")
+  .pipe(
+    map((e) => (e.target as HTMLTextAreaElement).value),
+    tap((content) => updateDraft((prev) => ({ ...prev, content })))
+  )
+  .subscribe();
+
 const $submitTextPrompt = fromEvent(promptTextarea, "keydown").pipe(
   filter((e) => (e as KeyboardEvent).key === "Enter" && !(e as KeyboardEvent).shiftKey),
   tap((e) => e.preventDefault()),
-  switchMap(async (e) => {
-    const prompt = (e.target as HTMLTextAreaElement).value;
-    const attachments = $draft.value.attachments;
-    const parts: ChatMessagePart[] = [];
-    (e.target as HTMLTextAreaElement).value = "";
-
-    // immediately render the message while waiting for the response
-    if (prompt.trim()) parts.push({ type: "text", text: prompt });
-    if (attachments.length) parts.push(...attachments.map((attachment) => ({ type: "image_url" as const, image_url: attachment })));
-
-    return { parts };
-  }),
-  filter((submission) => submission.parts.length > 0),
-  map((submission) => {
-    const id = createMessage("user", submission.parts);
-    updateDraft((_) => ({ content: "", attachments: [] }));
-    return { id, parts: submission.parts };
-  }),
+  map((_) => submitDraft(promptTextarea)),
+  filter((submission) => submission !== null),
   switchMap(async ({ id, parts }) => {
     const augmented = await augmentChat(parts);
     return { id, parts: augmented.parts };
@@ -139,7 +126,10 @@ const $submitTextPrompt = fromEvent(promptTextarea, "keydown").pipe(
   share()
 );
 
-const $latestPrompt = merge($promptInput, $submitTextPrompt.pipe(map((_) => ""))).pipe(distinctUntilChanged());
+const $latestPrompt = $draft.pipe(
+  map((draft) => draft.content),
+  distinctUntilChanged()
+);
 const $keyword = $latestPrompt.pipe(map((_) => getAtMentionedWord(promptTextarea)));
 const $suggestions = getSuggestionStream($keyword, matchKeywordToDocs);
 

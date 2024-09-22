@@ -1,5 +1,5 @@
 import { BehaviorSubject } from "rxjs";
-import { ChatMessage } from "./chat";
+import { ChatMessage, ChatMessagePart } from "./chat";
 
 export interface ThreadItem {
   id: string;
@@ -36,4 +36,24 @@ export const $draft = new BehaviorSubject<Draft>({ content: "", attachments: [] 
 
 export function updateDraft(updateFn: (prev: Draft) => Draft) {
   $draft.next({ ...$draft.value, ...updateFn($draft.value) });
+}
+
+export function submitDraft(textarea: HTMLTextAreaElement): { id: string; parts: ChatMessagePart[] } | null {
+  const prompt = $draft.value.content;
+  const attachments = $draft.value.attachments;
+
+  const parts: ChatMessagePart[] = [];
+
+  if (prompt.trim()) parts.push({ type: "text", text: prompt });
+  if (attachments.length) parts.push(...attachments.map((attachment) => ({ type: "image_url" as const, image_url: attachment })));
+
+  if (parts.length) {
+    updateDraft(() => ({ content: "", attachments: [] }));
+    textarea.value = "";
+
+    const id = createMessage("user", parts);
+    return { id, parts };
+  }
+
+  return null;
 }

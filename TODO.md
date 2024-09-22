@@ -9,6 +9,8 @@
 - Export via URL
 - Ease resize handle
 - Patch Text documentation to avoid using the "as=" pattern
+- Up arrow to get history input
+- Abort chat
 
 # DONE
 
