@@ -27,6 +27,7 @@ import { handleUseMicrophone } from "./handlers/handle-use-microphone";
 import { $artifacts, ArtifactVersion, symbolizeArtifact, updateArtifact } from "./lib/artifact";
 import { blobToDataUrl } from "./lib/blob";
 import { ChatMessagePart, getChatCompletionStream } from "./lib/chat";
+import { mountArtifactEditor } from "./lib/editor";
 import { $ctrlSpaceKeydownRaw, $spaceKeyupRaw } from "./lib/keyboard";
 import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
@@ -50,6 +51,12 @@ const useMicrophoneButton = $(`[data-action="use-microphone"]`) as HTMLButtonEle
 const holdToTalkButton = $(`[data-action="hold-to-talk"]`) as HTMLButtonElement;
 const artifactList = $("#artifacts") as HTMLElement;
 const debugButton = $("#debug-button") as HTMLButtonElement;
+
+const { setSourceCode } = mountArtifactEditor({
+  container: sourceElement,
+  onChange: (value) =>
+    updateArtifact((prev) => prev.map((artifact) => (artifact.isActive ? { ...artifact, minimumCode: value, id: crypto.randomUUID() } : artifact))),
+});
 
 /**
  * Handle inputs
@@ -346,7 +353,9 @@ $draft
   )
   .subscribe((view) => render(view, attachments));
 
-$activeArtifact.pipe(map((artifact) => html`<code data-lang="jsx">${artifact.minimumCode}</code>`)).subscribe((view) => render(view, sourceElement));
+// render source code
+$activeArtifact.pipe(tap((artifact) => setSourceCode(artifact.minimumCode))).subscribe();
+// render preview
 $activeArtifact
   .pipe(
     tap((artifact) => (previewIFrame.dataset.artifactId = artifact.id)),
