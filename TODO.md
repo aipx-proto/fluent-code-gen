@@ -3,7 +3,6 @@
 - "Counter Badge" cannot have space in component name
 - Leaking markdown parser destorys dom
 - Up arrow to get history input
-- Base versions with Page header, full width, and clamped with
 - Add previous chat context for RAG entity recognition
 - Auto import docs based on source code
 - Token counter
@@ -13,6 +12,7 @@
 
 # DONE
 
+- Base versions with Page header, full width, and clamped with
 - Ease resize handle
 - Heal from React VM Compiler Error (require vm refactor)
 - Abort chat
