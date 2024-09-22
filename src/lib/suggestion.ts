@@ -55,75 +55,6 @@ export async function getDocs(componentNames: string[]) {
   return docs;
 }
 
-// annotate transcript with @mention of docmented entities
-export async function augmentTranscript(transcript: string) {
-  const chatResponse = await getChatCompletion(
-    [
-      {
-        role: "system",
-        content: `Find the most relevant documentation based on transcript surrounded by triple quotes
-
-Available documentation:
-"""
-${docsIndex.map((doc) => `@${doc.title}: ${doc.description}`).join("\n")}
-"""
-
-Respond with the same transcript, followed by @mention of documentation titles. If there is no matching documentation, say "none available".
-    `,
-      },
-      {
-        role: "user",
-        content: `Transcript:
-"""
-I want to use buttons in a dialog
-"""`,
-      },
-      {
-        role: "assistant",
-        content: `I want to use buttons in a dialog. Docs: @button, @dialog`,
-      },
-      {
-        role: "user",
-        content: `Transcript: 
-"""
-Change app breadcrumb in header
-"""`,
-      },
-      {
-        role: "assistant",
-        content: "Change app breadcrumb in header. Docs: @AppShell",
-      },
-      {
-        role: "user",
-        content: `Transcript: 
-"""
-Make everything bigger
-"""`,
-      },
-      {
-        role: "assistant",
-        content: "Make everything bigger. Docs: none avaialble.",
-      },
-
-      {
-        role: "user",
-        content: ` Transcript:
-"""
-${transcript.trim()}
-"""`,
-      },
-    ],
-    {
-      temperature: 0,
-    }
-  );
-
-  const parts: ChatMessagePart[] = [];
-  if (transcript.trim()) parts.push({ type: "text", text: chatResponse });
-
-  return { parts };
-}
-
 function responseToBase64Url(response: Response) {
   return response.blob().then((blob) => {
     return new Promise<string>((resolve) => {
@@ -161,7 +92,7 @@ Available documentation:
 ${docsIndex.map((doc) => `@${doc.title}: ${doc.description}`).join("\n")}
 """
 
-Respond with the same request, followed by @mention of documentation titles. If there is no matching documentation, say "none available".
+Respond with the same request, followed by @mention of documentation. When there is no matching documentation, say "none available".
     `,
       },
       {

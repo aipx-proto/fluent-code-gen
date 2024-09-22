@@ -32,7 +32,7 @@ import { $ctrlSpaceKeydownRaw, $spaceKeyupRaw } from "./lib/keyboard";
 import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
 import { getReactVMHtml } from "./lib/react-vm";
-import { augmentChat, augmentTranscript, getAtMentionedWord, getDocMentions, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
+import { augmentChat, getAtMentionedWord, getDocMentions, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
 import { $draft, $thread, appendMessage, createMessage, submitDraft, updateDraft, updateThread } from "./lib/thread";
 import { getTranscriber } from "./lib/transcribe";
 import "./main.css";
@@ -148,12 +148,14 @@ fromEvent(holdToTalkButton, "mouseup")
   .subscribe(stop);
 
 const $submitVoicePrompt = $transcriptions.pipe(
-  switchMap((t) => augmentTranscript(t.combinedPhrases[0].text)),
-  filter((submission) => submission.parts.length > 0),
-  map((submission) => {
-    createMessage("user", submission.parts);
-    return submission;
+  tap((transcript) => updateDraft((prev) => ({ ...prev, content: prev.content + " " + transcript.combinedPhrases[0].text }))),
+  map((_) => submitDraft(promptTextarea)),
+  filter((submission) => submission !== null),
+  switchMap(async ({ id, parts }) => {
+    const augmented = await augmentChat(parts);
+    return { id, parts: augmented.parts };
   }),
+  tap(({ id, parts }) => updateThread((prev) => prev.map((item) => (item.id === id ? { ...item, content: parts } : item)))),
   share()
 );
 
