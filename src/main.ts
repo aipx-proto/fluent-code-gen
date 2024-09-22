@@ -30,7 +30,7 @@ import { ChatMessagePart, getChatCompletionStream } from "./lib/chat";
 import { $ctrlSpaceKeydownRaw, $spaceKeyupRaw } from "./lib/keyboard";
 import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
-import { getReactVMHtml, getReactVMJsx } from "./lib/react-vm";
+import { getReactVMHtml } from "./lib/react-vm";
 import { augmentChat, augmentTranscript, getAtMentionedWord, getDocMentions, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
 import { $draft, $thread, appendMessage, createMessage, updateDraft, updateThread } from "./lib/thread";
 import { getTranscriber } from "./lib/transcribe";
@@ -195,7 +195,7 @@ $submitTextPrompt
 
       const docs = await getDocs(allDocMentions);
       console.log(`Docs in use`, docs);
-      const systemPrompt = getCodeGenSystemPrompt({ docs, baseSource: baseArtifact.source });
+      const systemPrompt = getCodeGenSystemPrompt({ docs, baseSource: baseArtifact.minimumCode });
       const $chunks = await getChatCompletionStream(
         [{ role: "system", content: systemPrompt }, ...$thread.value.map((item) => ({ role: item.role, content: item.content }))],
         { temperature: 0 }
@@ -222,7 +222,7 @@ function renderArtifact(responseId: string) {
   const markdownCodePattern = /```jsx\n([\s\S]*)\n```/;
   const jsxCode = ($thread.value.find((item) => item.id === responseId)?.content as string).match(markdownCodePattern)?.at(1) ?? "";
   if (jsxCode) {
-    const fullScript = getReactVMJsx(jsxCode);
+    const minimumCode = jsxCode;
     const artifactId = crypto.randomUUID();
     const currentArtifactVersion = ++artifactVersion;
 
@@ -231,7 +231,7 @@ function renderArtifact(responseId: string) {
       {
         id: artifactId,
         name: `Revision ${currentArtifactVersion}`,
-        source: fullScript,
+        minimumCode,
         isActive: true,
       },
     ]);
@@ -346,13 +346,13 @@ $draft
   )
   .subscribe((view) => render(view, attachments));
 
-$activeArtifact.pipe(map((artifact) => html`<code data-lang="jsx">${artifact.source}</code>`)).subscribe((view) => render(view, sourceElement));
+$activeArtifact.pipe(map((artifact) => html`<code data-lang="jsx">${artifact.minimumCode}</code>`)).subscribe((view) => render(view, sourceElement));
 $activeArtifact
   .pipe(
     tap((artifact) => (previewIFrame.dataset.artifactId = artifact.id)),
     tap((artifact) => (debugButton.disabled = !artifact.error)),
     distinctUntilKeyChanged("id"),
-    map((artifact) => getReactVMHtml({ implementation: artifact.source })),
+    map((artifact) => getReactVMHtml({ implementation: artifact.minimumCode })),
     tap((reactVMCode) => (previewIFrame.srcdoc = reactVMCode))
   )
   .subscribe();

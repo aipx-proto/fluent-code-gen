@@ -5,7 +5,7 @@ import { baseArtifacts } from "../data/base-artifacts";
 export interface ArtifactVersion {
   id: string;
   name: string;
-  source: string;
+  minimumCode: string;
   error?: ReactVMErrorMessage;
   isActive?: boolean;
   isBase?: boolean;
