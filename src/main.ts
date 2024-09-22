@@ -1,7 +1,22 @@
 import { html, nothing, render } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
-import { combineLatestWith, distinctUntilKeyChanged, endWith, filter, fromEvent, map, merge, mergeWith, switchMap, tap, withLatestFrom } from "rxjs";
+import {
+  combineLatestWith,
+  distinctUntilChanged,
+  distinctUntilKeyChanged,
+  endWith,
+  filter,
+  fromEvent,
+  map,
+  merge,
+  mergeWith,
+  share,
+  Subject,
+  switchMap,
+  tap,
+  withLatestFrom,
+} from "rxjs";
 import { createDebugPrompt } from "./handlers/handle-auto-debug";
 import { handleClearThread } from "./handlers/handle-clear-thread";
 import { handleExport } from "./handlers/handle-export";
@@ -107,11 +122,27 @@ fromEvent(holdToTalkButton, "mouseup")
   )
   .subscribe(stop);
 
+const $abortRequest = new Subject<string>(); // id of the user message to abort
+
+const $keydown = fromEvent(promptTextarea, "keydown").pipe(share());
+
 // text submission -> draft
-const $submitText = fromEvent(promptTextarea, "keydown").pipe(
+const $submitText = $keydown.pipe(
   filter((e) => (e as KeyboardEvent).key === "Enter" && !(e as KeyboardEvent).shiftKey),
   tap((e) => e.preventDefault())
 );
+
+// text escape -> abort
+$keydown
+  .pipe(
+    filter((e) => (e as KeyboardEvent).key === "Escape"),
+    // emit last user message id from the thread
+    map(() => $thread.value.filter((item) => item.role === "user").at(-1)?.id ?? null),
+    filter((id) => id !== null),
+    distinctUntilChanged(), // abort only once
+    tap((id) => $abortRequest.next(id))
+  )
+  .subscribe();
 
 // voice submission -> draft
 const $submitVoice = $transcriptions.pipe(
@@ -124,6 +155,8 @@ const $submitDebug = fromEvent(debugButton, "click").pipe(
   filter((formattedError) => formattedError !== undefined),
   tap((formattedError) => updateDraft((prev) => ({ ...prev, content: formattedError })))
 );
+
+$abortRequest.subscribe((id) => console.log("abort", id));
 
 // draft -> docs -> chat completion -> thread
 merge($submitText, $submitVoice, $submitDebug)
