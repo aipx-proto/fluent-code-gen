@@ -1,4 +1,3 @@
-/// <reference lib="webworker" />
 import { html, nothing, render } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
