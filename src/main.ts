@@ -82,8 +82,6 @@ fromEvent(appRoot, "click")
   )
   .subscribe();
 
-const $submitDebugPrompt = fromEvent(debugButton, "click").pipe(map((_e) => handleAutoDebug($artifacts)));
-
 // pasting
 fromEvent(promptTextarea, "paste")
   .pipe(
@@ -159,6 +157,8 @@ const $submitVoicePrompt = $transcriptions.pipe(
   share()
 );
 
+const $submitDebugPrompt = fromEvent(debugButton, "click").pipe(map((_e) => handleAutoDebug($artifacts)));
+
 const $baseArtifact = $artifacts.pipe(
   map((artifacts) => artifacts.find((artifact) => artifact.isBase)),
   filter((artifact) => !!artifact)
@@ -171,7 +171,6 @@ const $activeArtifact = $artifacts.pipe(
 
 $submitTextPrompt
   .pipe(
-    tap((_) => console.log("submitted")),
     mergeWith($submitVoicePrompt, $submitDebugPrompt),
     withLatestFrom($baseArtifact),
     switchMap(async ([_, baseArtifact]) => {

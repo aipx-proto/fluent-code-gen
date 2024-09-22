@@ -13,6 +13,6 @@ ${[error.message, error.error?.message, error.error?.stack].filter(Boolean).join
 """
   `.trim();
 
-  createMessage("user", formattedError);
-  return { parts: [formattedError] };
+  const id = createMessage("user", formattedError);
+  return { id, parts: [formattedError] };
 }
