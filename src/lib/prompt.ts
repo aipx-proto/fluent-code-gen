@@ -16,6 +16,6 @@ Use the documentation surrounded by triple quotes to implement any @mentioned co
 ${options.docs.join("\n\n---\n\n")}
 """
 
-Respond with your reasoning followed by the updated code.
+Solve the problem step by step. Describe your plan first. Then provide any updated jsx code. Do not explain your code.
   `.trim();
 }

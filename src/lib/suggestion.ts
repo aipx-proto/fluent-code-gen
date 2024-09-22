@@ -68,7 +68,7 @@ Available documentation:
 ${docsIndex.map((doc) => `@${doc.title}: ${doc.description}`).join("\n")}
 """
 
-Respond with the same transcript, followed by @mention of documentation titles. If there is no matching documentation, say "none provided".
+Respond with the same transcript, followed by @mention of documentation titles. If there is no matching documentation, say "none available".
     `,
       },
       {
@@ -102,7 +102,7 @@ Make everything bigger
       },
       {
         role: "assistant",
-        content: "Make everything bigger. Docs: none provided.",
+        content: "Make everything bigger. Docs: none avaialble.",
       },
 
       {
@@ -120,6 +120,130 @@ ${transcript.trim()}
 
   const parts: ChatMessagePart[] = [];
   if (transcript.trim()) parts.push({ type: "text", text: chatResponse });
+
+  return { parts };
+}
+
+function responseToBase64Url(response: Response) {
+  return response.blob().then((blob) => {
+    return new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        resolve(reader.result as string);
+      };
+      reader.readAsDataURL(blob);
+    });
+  });
+}
+
+export async function augmentChat(rawParts: ChatMessagePart[]) {
+  const prompt = rawParts
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join("\n");
+  const imageParts = rawParts.filter((part) => part.type === "image_url");
+  const hasImage = imageParts.length > 0;
+
+  // fetch examples
+  const [buttonIconUrl, tabListUrl] = await Promise.all([
+    fetch("/training-examples/button-icon.png").then(responseToBase64Url),
+    fetch("/training-examples/tab-list.png").then(responseToBase64Url),
+  ]);
+
+  const chatResponse = await getChatCompletion(
+    [
+      {
+        role: "system",
+        content: `Find the most relevant documentation based on user request surrounded by triple quotes${hasImage ? " and imaages" : ""}.
+
+Available documentation:
+"""
+${docsIndex.map((doc) => `@${doc.title}: ${doc.description}`).join("\n")}
+"""
+
+Respond with the same request, followed by @mention of documentation titles. If there is no matching documentation, say "none available".
+    `,
+      },
+      {
+        role: "user",
+        content: `Request:
+"""
+I want to use buttons in a dialog
+"""`,
+      },
+      {
+        role: "assistant",
+        content: `I want to use buttons in a dialog. Docs: @button, @dialog`,
+      },
+      {
+        role: "user",
+        content: `Request: 
+"""
+Change app breadcrumb in header
+"""`,
+      },
+      {
+        role: "assistant",
+        content: "Change app breadcrumb in header. Docs: @AppShell",
+      },
+      {
+        role: "user",
+        content: `Request: 
+"""
+Make everything bigger
+"""`,
+      },
+      {
+        role: "assistant",
+        content: "Make everything bigger. Docs: none available.",
+      },
+      ...(hasImage
+        ? [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text" as const,
+                  text: "Add these two features to the confirmation dialog",
+                },
+                {
+                  type: "image_url" as const,
+                  image_url: { url: buttonIconUrl },
+                },
+                {
+                  type: "image_url" as const,
+                  image_url: { url: tabListUrl },
+                },
+              ],
+            },
+            {
+              role: "assistant",
+              content: "Add these two features to the confirmation dialog. Docs: @dialog, @button, @tablist",
+            },
+          ]
+        : []),
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: ` Request:
+"""
+${prompt.trim()}
+"""`,
+          },
+          ...imageParts,
+        ],
+      },
+    ],
+    {
+      temperature: 0,
+    }
+  );
+
+  const parts: ChatMessagePart[] = [];
+  parts.push({ type: "text", text: chatResponse });
+  parts.push(...imageParts);
 
   return { parts };
 }

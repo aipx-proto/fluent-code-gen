@@ -5,7 +5,6 @@ import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import {
   BehaviorSubject,
   combineLatestWith,
-  concatMap,
   distinctUntilChanged,
   distinctUntilKeyChanged,
   endWith,
@@ -32,7 +31,7 @@ import { $ctrlSpaceKeydownRaw, $spaceKeyupRaw } from "./lib/keyboard";
 import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
 import { getReactVMHtml, getReactVMJsx } from "./lib/react-vm";
-import { augmentTranscript, getAtMentionedWord, getDocMentions, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
+import { augmentChat, augmentTranscript, getAtMentionedWord, getDocMentions, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
 import { $draft, $thread, appendMessage, createMessage, updateDraft, updateThread } from "./lib/thread";
 import { getTranscriber } from "./lib/transcribe";
 import "./main.css";
@@ -119,12 +118,13 @@ const $promptInput = fromEvent(promptTextarea, "input").pipe(
 const $submitTextPrompt = fromEvent(promptTextarea, "keydown").pipe(
   filter((e) => (e as KeyboardEvent).key === "Enter" && !(e as KeyboardEvent).shiftKey),
   tap((e) => e.preventDefault()),
-  concatMap(async (e) => {
+  switchMap(async (e) => {
     const prompt = (e.target as HTMLTextAreaElement).value;
     const attachments = $draft.value.attachments;
     const parts: ChatMessagePart[] = [];
     (e.target as HTMLTextAreaElement).value = "";
 
+    // immediately render the message while waiting for the response
     if (prompt.trim()) parts.push({ type: "text", text: prompt });
     if (attachments.length) parts.push(...attachments.map((attachment) => ({ type: "image_url" as const, image_url: attachment })));
 
@@ -132,10 +132,15 @@ const $submitTextPrompt = fromEvent(promptTextarea, "keydown").pipe(
   }),
   filter((submission) => submission.parts.length > 0),
   map((submission) => {
-    createMessage("user", submission.parts);
+    const id = createMessage("user", submission.parts);
     updateDraft((_) => ({ content: "", attachments: [] }));
-    return submission;
+    return { id, parts: submission.parts };
   }),
+  switchMap(async ({ id, parts }) => {
+    const augmented = await augmentChat(parts);
+    return { id, parts: augmented.parts };
+  }),
+  tap(({ id, parts }) => updateThread((prev) => prev.map((item) => (item.id === id ? { ...item, content: parts } : item)))),
   share()
 );
 
@@ -158,7 +163,7 @@ fromEvent(holdToTalkButton, "mouseup")
   .subscribe(stop);
 
 const $submitVoicePrompt = $transcriptions.pipe(
-  concatMap((t) => augmentTranscript(t.combinedPhrases[0].text)),
+  switchMap((t) => augmentTranscript(t.combinedPhrases[0].text)),
   filter((submission) => submission.parts.length > 0),
   map((submission) => {
     createMessage("user", submission.parts);
