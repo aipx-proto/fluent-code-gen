@@ -1,7 +1,6 @@
 # TOOD
 
 - Up arrow to get history input
-- Heal from React VM Compiler Error (require vm refactor)
 - Base versions with Page header, full width, and clamped with
 - Add previous chat context for RAG entity recognition
 - Auto import docs based on source code
@@ -13,6 +12,7 @@
 
 # DONE
 
+- Heal from React VM Compiler Error (require vm refactor)
 - Abort chat
 - Voice interop with chat: clear chat and attachment. Use attachment
 - Export as file
