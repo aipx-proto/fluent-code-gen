@@ -18,7 +18,13 @@ body {
 
 .root-layout {
   display: grid;
-  grid-template-columns: auto 1fr 200px;
+  grid-template-columns: auto 1fr;
+  height: 100%;
+}
+
+.inner-layout {
+  display: grid;
+  grid-template-columns: 1fr auto;
   height: 100%;
 }
 
@@ -87,6 +93,10 @@ body {
   height: 100%;
   border: none;
   display: block;
+}
+
+.resizer {
+  height: 1rem;
 }
 
 .straddle {

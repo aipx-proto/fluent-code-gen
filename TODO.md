@@ -6,12 +6,12 @@
 - Auto import docs based on source code
 - Token counter
 - Export via URL
-- Ease resize handle
 - Patch Text documentation to avoid using the "as=" pattern
 - Use proper markdown parser
 
 # DONE
 
+- Ease resize handle
 - Heal from React VM Compiler Error (require vm refactor)
 - Abort chat
 - Voice interop with chat: clear chat and attachment. Use attachment

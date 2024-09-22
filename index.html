@@ -15,7 +15,7 @@
 
 <body>
   <div id="app" class="root-layout">
-    <div class="panel-left" data-resize="horizontal" style="width: 320px;">
+    <div class="panel-left" data-resize="horizontal" style="width: min(300px, 25vw);">
       <div class="straddle">
         Thread
         <div>
@@ -33,20 +33,23 @@
         </div>
       </div>
     </div>
-    <div class="panel-center player">
-      <div>
-        <button data-action="open-preview">Preview</button>
-        <button data-action="open-source">Source</button>
-        <button data-action="rebase">Rebase</button>
-        <button data-action="export">Export</button>
-        <button id="debug-button">Debug</button>
+    <div class="inner-layout">
+      <div class="panel-center player">
+        <div>
+          <button data-action="open-preview">Preview</button>
+          <button data-action="open-source">Source</button>
+          <button data-action="rebase">Rebase</button>
+          <button data-action="export">Export</button>
+          <button id="debug-button">Debug</button>
+        </div>
+        <iframe class="player__iframe" data-active-tab="true" data-artifact-id="" id="preview"></iframe>
+        <pre data-active-tab="false" id="source"></pre>
       </div>
-      <iframe class="player__iframe" data-active-tab="true" data-artifact-id="" id="preview"></iframe>
-      <pre data-active-tab="false" id="source"></pre>
-    </div>
-    <div class="panel-right">
-      <div>Versions</div>
-      <div id="artifacts" class="artifact-list"></div>
+      <div class="panel-right">
+        <div>Versions</div>
+        <div id="artifacts" class="artifact-list"></div>
+        <div class="resizer" data-resize="horizontal" style="width: min(200px, 25vw); transform: scale(-1, 1) "></div>
+      </div>
     </div>
   </div>
   <script type="module" src="/src/main.ts"></script>
