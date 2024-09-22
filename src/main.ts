@@ -12,8 +12,8 @@ import { handleRebase } from "./handlers/handle-rebase";
 import { handleRemoveAttachment } from "./handlers/handle-remove-attachment";
 import { handleUseMicrophone } from "./handlers/handle-use-microphone";
 import { $activeArtifact, $artifacts, $baseArtifact, symbolizeArtifact, updateArtifact } from "./lib/artifact";
-import { blobToDataUrl } from "./lib/blob";
 import { getChatCompletionStream } from "./lib/chat";
+import { filesToNamedBlobUrls } from "./lib/clipboard";
 import { mountArtifactEditor } from "./lib/editor";
 import { $ctrlSpaceKeydownRaw, $spaceKeyupRaw } from "./lib/keyboard";
 import { getCodeGenSystemPrompt } from "./lib/prompt";
@@ -74,16 +74,7 @@ fromEvent(promptTextarea, "paste")
   .pipe(
     map((e) => (e as ClipboardEvent).clipboardData?.files),
     filter((files) => !!files),
-    switchMap((files) =>
-      Promise.all(
-        [...files].map(async (file) => {
-          return {
-            name: file.name,
-            url: await blobToDataUrl(file),
-          };
-        })
-      )
-    ),
+    switchMap(filesToNamedBlobUrls),
     map((attachments) => attachments.filter((attachment) => attachment.url.startsWith("data:image/"))),
     map((attachments) => attachments.filter((attachment) => !$draft.value.attachments.some((existing) => existing.url === attachment.url))),
     tap((attachments) => updateDraft((prev) => ({ ...prev, attachments: [...prev.attachments, ...attachments] })))
