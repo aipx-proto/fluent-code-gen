@@ -1,5 +1,6 @@
+import { RequestOptions } from "openai/core.mjs";
 import { ChatCompletionCreateParamsNonStreaming, ChatCompletionCreateParamsStreaming } from "openai/resources/index.mjs";
-import { filter, from, map, mergeMap } from "rxjs";
+import { catchError, EMPTY, filter, from, map, mergeMap } from "rxjs";
 import { client } from "./azure";
 
 export interface OpenAIChatPayload {
@@ -48,27 +49,34 @@ export type OpenAIChatResponse = {
   };
 };
 
-export async function getChatCompletionStream(messages: ChatMessage[], options?: Partial<ChatCompletionCreateParamsStreaming>) {
-  const stream = client.chat.completions.create({
-    stream: true,
-    messages: messages as any[],
-    model: "gpt-4o",
-    ...options,
-  });
+export async function getChatCompletionStream(messages: ChatMessage[], params?: Partial<ChatCompletionCreateParamsStreaming>, options?: RequestOptions) {
+  const stream = client.chat.completions.create(
+    {
+      stream: true,
+      messages: messages as any[],
+      model: "gpt-4o",
+      ...params,
+    },
+    options
+  );
 
   return from(stream).pipe(
+    catchError((_error) => EMPTY),
     mergeMap((stream) => stream),
     map((chunk) => chunk.choices[0]?.delta?.content ?? ""),
     filter((content) => !!content)
   );
 }
 
-export async function getChatCompletion(messages: ChatMessage[], options?: Partial<ChatCompletionCreateParamsNonStreaming>) {
+export async function getChatCompletion(messages: ChatMessage[], params?: Partial<ChatCompletionCreateParamsNonStreaming>, options?: RequestOptions) {
   return client.chat.completions
-    .create({
-      messages: messages as any[],
-      model: "gpt-4o",
-      ...options,
-    })
+    .create(
+      {
+        messages: messages as any[],
+        model: "gpt-4o",
+        ...params,
+      },
+      options
+    )
     .then((response) => response.choices[0]?.message.content ?? "");
 }

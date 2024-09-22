@@ -6,13 +6,15 @@ export interface ThreadItem {
   role: string;
   content: ChatMessage["content"];
   html?: string;
+  abortController?: AbortController;
+  isEnded?: boolean;
 }
 
 export const $thread = new BehaviorSubject<ThreadItem[]>([]);
 
-export function createMessage(role: string, content: ThreadItem["content"]) {
+export function createMessage(role: string, content: ThreadItem["content"], abortController?: AbortController) {
   const id = crypto.randomUUID();
-  updateThread((prev) => [...prev, { id, role, content }]);
+  updateThread((prev) => [...prev, { id, role, content, abortController }]);
   return id;
 }
 
@@ -21,6 +23,26 @@ export function appendMessage(id: string, delta: string) {
     const message = prev.find((item) => item.id === id);
     if (!message) return prev;
     return prev.map((item) => (item.id === id ? { ...item, content: item.content + delta } : item));
+  });
+}
+
+export function endMessage(id: string) {
+  updateThread((prev) => {
+    const message = prev.find((item) => item.id === id);
+    if (!message) return prev;
+    return prev.map((item) => (item.id === id ? { ...item, isEnded: true } : item));
+  });
+}
+
+export function abortUserMessage(id: string) {
+  const userMessage = $thread.value.find((item) => item.id === id && !item.isEnded);
+  if (!userMessage) return;
+
+  userMessage?.abortController?.abort();
+  updateThread((prev) => {
+    const removeFromIndex = prev.findIndex((item) => item.id === id);
+    if (removeFromIndex === -1) return prev;
+    return prev.filter((_, index) => index < removeFromIndex);
   });
 }
 
@@ -42,7 +64,7 @@ export function updateDraft(updateFn: (prev: Draft) => Draft) {
   $draft.next({ ...$draft.value, ...updateFn($draft.value) });
 }
 
-export function submitDraft(textarea: HTMLTextAreaElement): { id: string; parts: ChatMessagePart[] } | null {
+export function submitDraft(textarea: HTMLTextAreaElement): { id: string; parts: ChatMessagePart[]; abortController: AbortController } | null {
   const prompt = $draft.value.content;
   const attachments = $draft.value.attachments;
 
@@ -55,8 +77,10 @@ export function submitDraft(textarea: HTMLTextAreaElement): { id: string; parts:
     updateDraft(() => ({ content: "", attachments: [] }));
     textarea.value = "";
 
-    const id = createMessage("user", parts);
-    return { id, parts };
+    const abortController = new AbortController();
+    const id = createMessage("user", parts, abortController);
+
+    return { id, parts, abortController };
   }
 
   return null;

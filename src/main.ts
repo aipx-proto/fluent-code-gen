@@ -5,12 +5,14 @@ import {
   combineLatestWith,
   distinctUntilChanged,
   distinctUntilKeyChanged,
+  EMPTY,
   endWith,
   filter,
   fromEvent,
   map,
   merge,
   mergeWith,
+  Observable,
   share,
   Subject,
   switchMap,
@@ -34,7 +36,18 @@ import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
 import { getReactVMHtml } from "./lib/react-vm";
 import { augmentChat, getAtMentionedWord, getDocMentions, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
-import { $draft, $draftDistinctContent, $thread, appendMessage, createMessage, submitDraft, updateDraft, updateThread } from "./lib/thread";
+import {
+  $draft,
+  $draftDistinctContent,
+  $thread,
+  abortUserMessage,
+  appendMessage,
+  createMessage,
+  endMessage,
+  submitDraft,
+  updateDraft,
+  updateThread,
+} from "./lib/thread";
 import { getTranscriber } from "./lib/transcribe";
 import "./main.css";
 
@@ -140,7 +153,7 @@ $keydown
     map(() => $thread.value.filter((item) => item.role === "user").at(-1)?.id ?? null),
     filter((id) => id !== null),
     distinctUntilChanged(), // abort only once
-    tap((id) => $abortRequest.next(id))
+    tap(abortUserMessage)
   )
   .subscribe();
 
@@ -156,43 +169,49 @@ const $submitDebug = fromEvent(debugButton, "click").pipe(
   tap((formattedError) => updateDraft((prev) => ({ ...prev, content: formattedError })))
 );
 
-$abortRequest.subscribe((id) => console.log("abort", id));
-
 // draft -> docs -> chat completion -> thread
 merge($submitText, $submitVoice, $submitDebug)
   .pipe(
     map((_) => submitDraft(promptTextarea)),
     filter((submission) => submission !== null),
-    switchMap(async ({ id, parts }) => {
-      const augmented = await augmentChat(parts);
-      return { id, parts: augmented.parts };
+    switchMap(async ({ id, parts, abortController }) => {
+      const augmented = await augmentChat(parts, abortController.signal).catch(() => ({ parts: [] }));
+      return { id, parts: augmented.parts, abortController };
     }),
     tap(({ id, parts }) => updateThread((prev) => prev.map((item) => (item.id === id ? { ...item, content: parts } : item)))),
     withLatestFrom($baseArtifact),
-    switchMap(async ([_, baseArtifact]) => {
+    switchMap(async ([submission, baseArtifact]) => {
+      if (submission.abortController.signal.aborted) return { submission, $chunks: EMPTY as Observable<string>, responseId: "" };
       const responseId = createMessage("assistant", "");
       const allDocMentions = $thread.value
         .flatMap((item) => (Array.isArray(item.content) ? item.content.filter((content) => content.type === "text").map((item) => item.text) : [item.content]))
         .flatMap(getDocMentions);
 
-      const docs = await getDocs(allDocMentions);
+      const docs = await getDocs(allDocMentions, submission.abortController.signal).catch(() => []);
       console.log(`Docs in use`, docs);
       const systemPrompt = getCodeGenSystemPrompt({ docs, baseSource: baseArtifact.minimumCode });
       const $chunks = await getChatCompletionStream(
         [{ role: "system", content: systemPrompt }, ...$thread.value.map((item) => ({ role: item.role, content: item.content }))],
-        { temperature: 0 }
+        { temperature: 0 },
+        { signal: submission.abortController.signal }
       );
-      return { $chunks, responseId };
+      return { submission, $chunks, responseId };
     }),
-    switchMap(({ $chunks, responseId }) =>
+    switchMap(({ submission, $chunks, responseId }) =>
       $chunks.pipe(
-        map((chunk) => ({ responseId, chunk, end: false })),
-        endWith({ responseId, chunk: "", end: true })
+        map((chunk) => ({ submission, responseId, chunk, end: false })),
+        endWith({ submission, responseId, chunk: "", end: true })
       )
     ),
     tap((item) => {
-      if (!item.end) appendMessage(item.responseId, item.chunk);
-      else {
+      // ensure item still exists
+      if (item.submission.abortController.signal.aborted) return;
+      if (!$thread.value.find((threadItem) => threadItem.id === item.responseId)) return;
+
+      if (!item.end) {
+        appendMessage(item.responseId, item.chunk);
+      } else {
+        endMessage(item.responseId);
         renderArtifact(item.responseId);
       }
     })

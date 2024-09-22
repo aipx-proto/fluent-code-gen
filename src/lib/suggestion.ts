@@ -42,7 +42,7 @@ export function getAtMentionedWord(textarea: HTMLTextAreaElement) {
   return mention;
 }
 
-export async function getDocs(componentNames: string[]) {
+export async function getDocs(componentNames: string[], abortSignal?: AbortSignal) {
   const uniqueLowercaseNames = Array.from(new Set(componentNames.map((name) => name.toLowerCase())));
   const docsDict = new Map(docsIndex.map((doc) => [doc.title.toLowerCase(), doc]));
 
@@ -50,7 +50,7 @@ export async function getDocs(componentNames: string[]) {
     uniqueLowercaseNames
       .map((title) => docsDict.get(title)!)
       .filter(Boolean)
-      .map((filename) => fetch(`/${filename.path}`).then((res) => res.text()))
+      .map((filename) => fetch(`/${filename.path}`, { signal: abortSignal }).then((res) => res.text()))
   );
   return docs;
 }
@@ -67,7 +67,7 @@ function responseToBase64Url(response: Response) {
   });
 }
 
-export async function augmentChat(rawParts: ChatMessagePart[]) {
+export async function augmentChat(rawParts: ChatMessagePart[], abortSignal?: AbortSignal) {
   const prompt = rawParts
     .filter((part) => part.type === "text")
     .map((part) => part.text)
@@ -77,8 +77,8 @@ export async function augmentChat(rawParts: ChatMessagePart[]) {
 
   // fetch examples
   const [buttonIconUrl, tabListUrl] = await Promise.all([
-    fetch("/training-examples/button-icon.png").then(responseToBase64Url),
-    fetch("/training-examples/tab-list.png").then(responseToBase64Url),
+    fetch("/training-examples/button-icon.png", { signal: abortSignal }).then(responseToBase64Url),
+    fetch("/training-examples/tab-list.png", { signal: abortSignal }).then(responseToBase64Url),
   ]);
 
   const chatResponse = await getChatCompletion(
@@ -169,6 +169,9 @@ ${prompt.trim()}
     ],
     {
       temperature: 0,
+    },
+    {
+      signal: abortSignal,
     }
   );
 
