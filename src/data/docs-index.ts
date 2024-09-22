@@ -6,7 +6,18 @@ const cdkDocsIndex: DocumentSuggestion[] = [
     title: "AppShell",
     description: "Provides App header and Left navigation. App header has customizable breadcrumb. Left nav has customizable active item.",
   },
-  { path: "cdk/layout.md", title: "Layout", description: "CSS grid and flex layout" },
+  {
+    path: "cdk/page-header.md",
+    title: "PageHeader",
+    description:
+      "Top area of the page that provides the context for the user. It must have a title and can have toolbar, back button, tablist, and description text. Can only be used inside PageGrid.",
+  },
+  {
+    path: "cdk/page-content.md",
+    title: "PageContent",
+    description: "Main area of the app. Can only be used inside PageGrid. This is the scrolling area for long content.",
+  },
+  { path: "cdk/layout.md", title: "Layout", description: "Implement custom layout with CSS grid and flex box" },
 ];
 
 const stylesDocsIndex: DocumentSuggestion[] = [
