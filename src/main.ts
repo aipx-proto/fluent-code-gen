@@ -31,7 +31,7 @@ import { mountArtifactEditor } from "./lib/editor";
 import { $ctrlSpaceKeydownRaw, $spaceKeyupRaw } from "./lib/keyboard";
 import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
-import { getReactVMHtml } from "./lib/react-vm";
+import { getReactVMHtml, getReactVMJsx } from "./lib/react-vm";
 import { augmentChat, augmentTranscript, getAtMentionedWord, getDocMentions, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
 import { $draft, $thread, appendMessage, createMessage, updateDraft, updateThread } from "./lib/thread";
 import { getTranscriber } from "./lib/transcribe";
@@ -52,15 +52,16 @@ const holdToTalkButton = $(`[data-action="hold-to-talk"]`) as HTMLButtonElement;
 const artifactList = $("#artifacts") as HTMLElement;
 const debugButton = $("#debug-button") as HTMLButtonElement;
 
+/**
+ * Handle inputs
+ */
+
+// source code editor
 const { setSourceCode } = mountArtifactEditor({
   container: sourceElement,
   onChange: (value) =>
     updateArtifact((prev) => prev.map((artifact) => (artifact.isActive ? { ...artifact, minimumCode: value, id: crypto.randomUUID() } : artifact))),
 });
-
-/**
- * Handle inputs
- */
 
 // event delegation
 fromEvent(appRoot, "click")
@@ -75,10 +76,26 @@ fromEvent(appRoot, "click")
         handleUseMicrophone(action, useMicrophoneButton, holdToTalkButton);
         handleOpenArtifact(action, trigger, updateArtifact);
         handleRebase(action, $thread, updateArtifact);
+        handleExport(action, $artifacts);
       }
     })
   )
   .subscribe();
+
+function handleExport(action: string, $artifacts: BehaviorSubject<ArtifactVersion[]>) {
+  if (action !== "export") return;
+  const artifacts = $artifacts.value;
+  const artifact = artifacts.find((artifact) => artifact.isActive);
+  if (!artifact) return;
+  const fullHtml = getReactVMHtml({ implementation: getReactVMJsx(artifact.minimumCode) });
+  const blob = new Blob([fullHtml], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${artifact.name}-${new Date().toISOString()}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 const $submitDebugPrompt = fromEvent(debugButton, "click").pipe(map((e) => handleAutoDebug($artifacts)));
 

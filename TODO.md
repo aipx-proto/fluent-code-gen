@@ -1,16 +1,16 @@
 # TOOD
 
 - Base versions with Page header, full width, and clamped with
-- Source editor with syntax highlight
 - Auto import docs based on source code
 - Token counter
-- Export as file
 - Export via URL
 - Ease resize handle
 - Patch Text documentation to avoid using the "as=" pattern
 
 # DONE
 
+- Export as file
+- Source editor with syntax highlight
 - Rich docs for Fluent react
 - Handle errors
 - Use base as system prompt
