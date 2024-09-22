@@ -1,8 +1,7 @@
 import { BehaviorSubject } from "rxjs";
 import { ArtifactVersion } from "../lib/artifact";
-import { createMessage } from "../lib/thread";
 
-export function handleAutoDebug($artifacts: BehaviorSubject<ArtifactVersion[]>) {
+export function createDebugPrompt($artifacts: BehaviorSubject<ArtifactVersion[]>) {
   const error = $artifacts.value.find((artifact) => artifact.isActive && artifact.error)?.error;
   if (!error) return;
 
@@ -13,6 +12,5 @@ ${[error.message, error.error?.message, error.error?.stack].filter(Boolean).join
 """
   `.trim();
 
-  const id = createMessage("user", formattedError);
-  return { id, parts: [formattedError] };
+  return formattedError;
 }

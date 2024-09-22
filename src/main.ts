@@ -10,13 +10,14 @@ import {
   filter,
   fromEvent,
   map,
+  merge,
   mergeWith,
   share,
   switchMap,
   tap,
   withLatestFrom,
 } from "rxjs";
-import { handleAutoDebug } from "./handlers/handle-auto-debug";
+import { createDebugPrompt } from "./handlers/handle-auto-debug";
 import { handleClearThread } from "./handlers/handle-clear-thread";
 import { handleExport } from "./handlers/handle-export";
 import { handleOpenArtifact } from "./handlers/handle-open-artifact";
@@ -111,7 +112,7 @@ fromEvent(promptTextarea, "input")
   )
   .subscribe();
 
-const $submitTextPrompt = fromEvent(promptTextarea, "keydown").pipe(
+const $submitText = fromEvent(promptTextarea, "keydown").pipe(
   filter((e) => (e as KeyboardEvent).key === "Enter" && !(e as KeyboardEvent).shiftKey),
   tap((e) => e.preventDefault()),
   map((_) => submitDraft(promptTextarea)),
@@ -145,7 +146,7 @@ fromEvent(holdToTalkButton, "mouseup")
   )
   .subscribe(stop);
 
-const $submitVoicePrompt = $transcriptions.pipe(
+const $submitVoice = $transcriptions.pipe(
   tap((transcript) => updateDraft((prev) => ({ ...prev, content: prev.content + " " + transcript.combinedPhrases[0].text }))),
   map((_) => submitDraft(promptTextarea)),
   filter((submission) => submission !== null),
@@ -157,7 +158,12 @@ const $submitVoicePrompt = $transcriptions.pipe(
   share()
 );
 
-const $submitDebugPrompt = fromEvent(debugButton, "click").pipe(map((_e) => handleAutoDebug($artifacts)));
+const $submitDebug = fromEvent(debugButton, "click").pipe(
+  map((_e) => createDebugPrompt($artifacts)),
+  filter((formattedError) => formattedError !== undefined),
+  tap((formattedError) => updateDraft((prev) => ({ ...prev, content: formattedError }))),
+  map((_) => submitDraft(promptTextarea))
+);
 
 const $baseArtifact = $artifacts.pipe(
   map((artifacts) => artifacts.find((artifact) => artifact.isBase)),
@@ -169,9 +175,8 @@ const $activeArtifact = $artifacts.pipe(
   filter((artifact) => !!artifact)
 );
 
-$submitTextPrompt
+merge($submitText, $submitVoice, $submitDebug)
   .pipe(
-    mergeWith($submitVoicePrompt, $submitDebugPrompt),
     withLatestFrom($baseArtifact),
     switchMap(async ([_, baseArtifact]) => {
       const responseId = createMessage("assistant", "");
