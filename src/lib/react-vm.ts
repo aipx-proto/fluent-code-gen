@@ -19,9 +19,9 @@ export function getReactVMHtml(options: GetPreviewOptions) {
     "@fluentui/react-components": "^9.54.13?bundle-deps",
     "@fluentui/react-icons": "^2.0.258?bundle-deps",
     "styled-components": "^6.1.13?bundle-deps",
-    "ai-studio-cdk": "^0.0.17?bundle-deps"
+    "ai-studio-cdk": "^0.0.18?bundle-deps"
   }</script>
-  <script src="https://esm.sh/ai-studio-cdk@0.0.17/dist/react-vm.js?raw" crossorigin></script>
+  <script src="https://esm.sh/ai-studio-cdk@0.0.18/dist/react-vm.js?raw" crossorigin></script>
   <style>
 
   </style>
