@@ -52,7 +52,7 @@ export async function getDocs(componentNames: string[], abortSignal?: AbortSigna
     uniqueLowercaseNames
       .map((title) => docsDict.get(title)!)
       .filter(Boolean)
-      .map((filename) => fetch(`${import.meta.env.BASE_URL}/${filename.path}`, { signal: abortSignal }).then((res) => res.text()))
+      .map((filename) => fetch(`${import.meta.env.BASE_URL}${filename.path}`, { signal: abortSignal }).then((res) => res.text()))
   );
   return docs;
 }
@@ -79,8 +79,8 @@ export async function augmentChat(rawParts: ChatMessagePart[], abortSignal?: Abo
 
   // fetch examples
   const [buttonIconUrl, tabListUrl] = await Promise.all([
-    fetch(`${import.meta.env.BASE_URL}/training-examples/button-icon.png`, { signal: abortSignal }).then(responseToBase64Url),
-    fetch(`${import.meta.env.BASE_URL}/training-examples/tab-list.png`, { signal: abortSignal }).then(responseToBase64Url),
+    fetch(`${import.meta.env.BASE_URL}training-examples/button-icon.png`, { signal: abortSignal }).then(responseToBase64Url),
+    fetch(`${import.meta.env.BASE_URL}training-examples/tab-list.png`, { signal: abortSignal }).then(responseToBase64Url),
   ]);
 
   const chatResponse = await getChatCompletion(
