@@ -1,4 +1,5 @@
 import type { ReactVMErrorMessage } from "ai-studio-cdk/react-vm";
+import { marked } from "marked";
 import { BehaviorSubject, filter, map } from "rxjs";
 import { baseArtifacts } from "../data/base-artifacts";
 
@@ -28,10 +29,15 @@ export function updateArtifact(updateFn: (prev: ArtifactVersion[]) => ArtifactVe
 }
 
 export function symbolizeArtifact(options: { id: string; name: string; content: string }) {
-  const markdownCodePattern = /```jsx\n([\s\S]*)\n```/g;
-
-  // replace ```jsx ``` block with <pre><code data-length="num">[length of code] </code></pre>
-  return `${options.content.replace(markdownCodePattern, (_match, _code) => {
-    return `<button data-action="open-artifact" data-artifact="${options.id}">${options.name}</button>`;
-  })}`;
+  const customMarked = marked.use({
+    extensions: [
+      {
+        name: "code",
+        renderer(_token) {
+          return `<button data-action="open-artifact" data-artifact="${options.id}">${options.name}</button>`;
+        },
+      },
+    ],
+  });
+  return customMarked.parse(options.content);
 }

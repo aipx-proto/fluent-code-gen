@@ -51,6 +51,10 @@ export function updateThread(updateFn: (prev: ThreadItem[]) => ThreadItem[]) {
   $thread.next(updateFn($thread.value));
 }
 
+export function updateThreadAsync(updateFn: (prev: ThreadItem[]) => Promise<ThreadItem[]>) {
+  updateFn($thread.value).then((updated) => $thread.next(updated));
+}
+
 export interface Draft {
   content: string;
   attachments: { name: string; url: string }[];

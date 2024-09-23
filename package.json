@@ -21,6 +21,7 @@
     "codemirror": "^6.0.1",
     "gpt-tokenizer": "^2.2.3",
     "lit": "^3.2.0",
+    "marked": "^14.1.2",
     "openai": "^4.57.0",
     "rxjs": "^7.8.1"
   }

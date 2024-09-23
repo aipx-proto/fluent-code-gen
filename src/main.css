@@ -88,6 +88,27 @@ body {
   .role {
     font-weight: 600;
   }
+
+  .html {
+    display: grid;
+    justify-items: start;
+    gap: 8px;
+
+    * {
+      margin: 0;
+      word-break: break-word;
+    }
+
+    pre {
+      white-space: pre-wrap;
+    }
+
+    ul,
+    ol {
+      margin: 0;
+      padding-inline-start: 2rem;
+    }
+  }
 }
 
 .player__iframe {

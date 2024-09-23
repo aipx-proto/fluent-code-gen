@@ -46,6 +46,7 @@ import {
   submitDraft,
   updateDraft,
   updateThread,
+  updateThreadAsync,
 } from "./lib/thread";
 import { getTranscriber } from "./lib/transcribe";
 import "./main.css";
@@ -236,11 +237,13 @@ function renderArtifact(responseId: string) {
       },
     ]);
 
-    updateThread((prev) =>
-      prev.map((item) =>
-        item.id === responseId
-          ? { ...item, html: symbolizeArtifact({ content: item.content as string, id: artifactId, name: `Revision ${currentArtifactVersion}` }) }
-          : item
+    updateThreadAsync(async (prev) =>
+      Promise.all(
+        prev.map(async (item) =>
+          item.id === responseId
+            ? { ...item, html: await symbolizeArtifact({ content: item.content as string, id: artifactId, name: `Revision ${currentArtifactVersion}` }) }
+            : item
+        )
       )
     );
   }
@@ -307,7 +310,7 @@ $thread
               html`<li>
                 <span class="role">${item.role}:</span>
                 ${item.html
-                  ? html`<div data-wrap="pre-wrap">${unsafeHTML(item.html)}</div> `
+                  ? html`<div class="html">${unsafeHTML(item.html)}</div> `
                   : typeof item.content === "string"
                   ? html` <div data-wrap="pre-wrap">${item.content}</div> `
                   : item.content
