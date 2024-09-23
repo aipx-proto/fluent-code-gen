@@ -10,10 +10,23 @@
     :root {
       color-scheme: light dark;
     }
+
+    body.authenticated {
+      .auth-message {
+        display: none;
+      }
+    }
+
+    body:not(.authenticated) {
+      .root-layout {
+        display: none;
+      }
+    }
   </style>
 </head>
 
 <body>
+  <div class="auth-message">Authenticating...</div>
   <div id="app" class="root-layout">
     <div class="panel-left" data-resize="horizontal" style="width: min(300px, 25vw);">
       <div class="straddle">
