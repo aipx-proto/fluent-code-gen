@@ -12,6 +12,20 @@ export async function initializeAuthenticatedApp() {
   await credential.authenticate([]);
 }
 
+export async function logout() {
+  // manual remove all local storage
+  localStorage.clear();
+  sessionStorage.clear();
+
+  // manually clear cookies
+  const cookies = document.cookie.split(";");
+  cookies.forEach((cookie) => {
+    const eqPos = cookie.indexOf("=");
+    const name = eqPos > -1 ? cookie.substring(0, eqPos) : cookie;
+    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  });
+}
+
 const azureADTokenProvider = getBearerTokenProvider(credential, []);
 export const client = new AzureOpenAI({ azureADTokenProvider, apiVersion: "2024-07-01-preview", endpoint: "https://proto-api.azure-api.net" });
 

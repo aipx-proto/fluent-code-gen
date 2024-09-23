@@ -21,6 +21,7 @@ import {
 import { createDebugPrompt } from "./handlers/handle-auto-debug";
 import { handleClearThread } from "./handlers/handle-clear-thread";
 import { handleExport } from "./handlers/handle-export";
+import { handleLogout } from "./handlers/handle-logout";
 import { handleOpenArtifact } from "./handlers/handle-open-artifact";
 import { handlePlayerTabSwitch } from "./handlers/handle-player-tab-switch";
 import { handleRebase } from "./handlers/handle-rebase";
@@ -95,6 +96,7 @@ initializeAuthenticatedApp().then(() => {
           handleOpenArtifact(action, trigger, updateArtifact);
           handleRebase(action, $thread, updateArtifact);
           handleExport(action, $artifacts);
+          handleLogout(action);
         }
       })
     )
