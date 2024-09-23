@@ -102,6 +102,7 @@ Make sure to enable HTTP/2 protocol support in the API Management. Search for `p
 - Generate Fluent icon documentation: https://github.com/aipx-proto/fluentui-system-icons
 - Generate Fluent component documentation: https://github.com/aipx-proto/fluent-doc-gen
 - React VM to run LLM generated code without bloat: https://github.com/aipx-proto/auto-ide
+- Small set of Fluent UI abstractions for AI Studio: https://github.com/aipx-proto/auto-ide
 - This is the top level project to tie the above together into a single user experience. Focusing on multi-modalities:
   - Chat
   - Voice control
