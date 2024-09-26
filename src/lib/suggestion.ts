@@ -93,7 +93,7 @@ ${docsIndex.map((doc) => `@${doc.title}: ${doc.description}`).join("\n")}
 """
 
 Enrich user's request surrounded by triple quotes${hasImage ? " and the provided images" : ""} with documentation @mentions.
-Respond with enriched request. When there is no matching documentation, say "No documentation available".
+Respond with enriched request.
     `,
       },
       {
@@ -130,7 +130,7 @@ Make everything bigger
       },
       {
         role: "assistant",
-        content: "Make everything bigger. No documentation available",
+        content: "Make everything bigger.",
       },
       ...(hasImage
         ? [

@@ -20,6 +20,6 @@ ${options.docs.join("\n\n---\n\n")}
 """
 
 Solve the problem step by step. Describe your plan first. Then provide updated code in a single jsx code block. Do not explain your code.
-If user didn't provide documentation, decline the edit and ask user to rewrite the request with more details.
+If user instruction is unclear, work with the user until the instruction is clear.
   `.trim();
 }
