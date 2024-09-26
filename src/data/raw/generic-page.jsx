@@ -1,7 +1,6 @@
 import { Toolbar, ToolbarButton, ToolbarDivider } from "@fluentui/react-components";
 import { CircleRegular } from "@fluentui/react-icons";
 import { AppShell, PageContent, PageGrid, PageHeader } from "ai-studio-cdk";
-import React from "react";
 
 export default function App() {
   return (

@@ -1,4 +1,3 @@
-import React from "react";
 import { AppShell } from "ai-studio-cdk";
 
 export default function App() {

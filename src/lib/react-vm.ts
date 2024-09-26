@@ -40,6 +40,7 @@ ${options.implementation}
 
 export function getReactVMJsx(implementation: string) {
   return `
+import React from "react";
 import ReactDOM from "react-dom/client";
 import { FluentProvider, webLightTheme } from "@fluentui/react-components";
 ${implementation}
