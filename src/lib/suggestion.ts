@@ -85,14 +85,15 @@ export async function augmentChat(rawParts: ChatMessagePart[], abortSignal?: Abo
     [
       {
         role: "system",
-        content: `Find the most relevant documentation based on user request surrounded by triple quotes${hasImage ? " and imaages" : ""}.
+        content: `Suggest useful documentation to help user build a UI with Microsoft Fluent design system.
 
-Available documentation:
+You must choose from this list of documentation:
 """
 ${docsIndex.map((doc) => `@${doc.title}: ${doc.description}`).join("\n")}
 """
 
-Respond with the same request, followed by @mention of documentation. When there is no matching documentation, say "none available".
+Enrich user's request surrounded by triple quotes${hasImage ? " and the provided images" : ""} with documentation @mentions.
+Respond with enriched request. When there is no matching documentation, say "No documentation available".
     `,
       },
       {
@@ -104,7 +105,8 @@ I want to use buttons in a dialog
       },
       {
         role: "assistant",
-        content: `I want to use buttons in a dialog. Docs: @button, @dialog`,
+        content: `
+I want to use @button and @dialog. Put buttons inside the dialog`,
       },
       {
         role: "user",
@@ -115,7 +117,9 @@ Change app breadcrumb in header
       },
       {
         role: "assistant",
-        content: "Change app breadcrumb in header. Docs: @AppShell",
+        content: `
+Change the breadcrumb in the @AppShell app header area. 
+`,
       },
       {
         role: "user",
@@ -126,7 +130,7 @@ Make everything bigger
       },
       {
         role: "assistant",
-        content: "Make everything bigger. Docs: none available.",
+        content: "Make everything bigger. No documentation available",
       },
       ...(hasImage
         ? [
@@ -149,7 +153,7 @@ Make everything bigger
             },
             {
               role: "assistant",
-              content: "Add these two features to the confirmation dialog. Docs: @dialog, @button, @tablist",
+              content: "Add these two features, @button and @tablist, to the confirmation @dialog.",
             },
           ]
         : []),
