@@ -85,14 +85,13 @@ export async function augmentChat(rawParts: ChatMessagePart[], abortSignal?: Abo
     [
       {
         role: "system",
-        content: `Suggest useful documentation to help user build a UI with Microsoft Fluent design system.
+        content: `Enrich the user request with @mention of documentation titles to help user build a UI with Microsoft Fluent design system.
 
 You must choose from this list of documentation:
 """
 ${docsIndex.map((doc) => `@${doc.title}: ${doc.description}`).join("\n")}
 """
 
-Enrich user's request surrounded by triple quotes${hasImage ? " and the provided images" : ""} with documentation @mentions.
 Respond with enriched request.
     `,
       },
