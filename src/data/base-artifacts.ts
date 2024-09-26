@@ -9,7 +9,7 @@ const blankPage: ArtifactVersion = {
   id: "blank@1.0.0",
   name: "Blank Page",
   minimumCode: getReactVMJsx(blankPageJsx.trim()),
-  isBase: true,
+  isBase: false,
   isActive: false,
 };
 
@@ -25,7 +25,7 @@ const tabbedPage: ArtifactVersion = {
   id: "tabbed-page@1.0.0",
   name: "Tabbed Page",
   minimumCode: getReactVMJsx(tabbedPageJsx.trim()),
-  isBase: true,
+  isBase: false,
   isActive: false,
 };
 
@@ -33,7 +33,7 @@ const fullWidthPage: ArtifactVersion = {
   id: "full-width-page@1.0.0",
   name: "Full-width Page",
   minimumCode: getReactVMJsx(fullWidthPageJsx.trim()),
-  isBase: true,
+  isBase: false,
   isActive: false,
 };
 

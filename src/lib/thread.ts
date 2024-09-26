@@ -90,3 +90,10 @@ export function submitDraft(textarea: HTMLTextAreaElement): { id: string; parts:
 
   return null;
 }
+
+export function getTextContent(item: ThreadItem) {
+  return (item.content as ChatMessagePart[])
+    .filter((item) => item.type === "text")
+    .map((item) => item.text.trim())
+    .join("\n");
+}

@@ -45,6 +45,7 @@ import {
   appendMessage,
   createMessage,
   endMessage,
+  getTextContent,
   submitDraft,
   updateDraft,
   updateThread,
@@ -318,13 +319,10 @@ initializeAuthenticatedApp().then(() => {
                 html`<li>
                   <span class="role">${item.role}:</span>
                   ${item.html
-                    ? html`<div class="html">${unsafeHTML(item.html)}</div> `
+                    ? html`<div class="html">${unsafeHTML(item.html)}</div>`
                     : typeof item.content === "string"
-                    ? html` <div data-wrap="pre-wrap">${item.content}</div> `
-                    : item.content
-                        .filter((item) => item.type === "text")
-                        .map((item) => item.text)
-                        .join("")}
+                    ? html`<div data-wrap="pre-wrap">${item.content}</div>`
+                    : html`<div data-wrap="pre-wrap">${getTextContent(item)}</div>`}
                   ${Array.isArray(item.content)
                     ? html`
                         <div class="thumbnail-grid">
