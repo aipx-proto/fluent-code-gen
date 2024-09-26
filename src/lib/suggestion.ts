@@ -6,7 +6,6 @@ export interface DocumentSuggestion {
   path: string;
   description: string;
   title: string;
-  isRequired?: boolean;
 }
 export function getSuggestionStream<T>($keyword: Observable<string>, onMatch: (keyword: string) => Promise<T[]>): Observable<T[]> {
   const $latestAtMention = $keyword.pipe(distinctUntilChanged(), share());
@@ -44,8 +43,7 @@ export function getAtMentionedWord(textarea: HTMLTextAreaElement) {
 }
 
 export async function getDocs(componentNames: string[], abortSignal?: AbortSignal) {
-  const requiredDocs = docsIndex.filter((doc) => doc.isRequired).map((doc) => doc.title.toLowerCase());
-  const uniqueLowercaseNames = Array.from(new Set([...requiredDocs, ...componentNames.map((name) => name.toLowerCase())]));
+  const uniqueLowercaseNames = Array.from(new Set([...componentNames.map((name) => name.toLowerCase())]));
   const docsDict = new Map(docsIndex.map((doc) => [doc.title.toLowerCase(), doc]));
 
   const docs = await Promise.all(

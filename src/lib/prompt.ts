@@ -4,18 +4,22 @@ export interface GetCodeGenSystemPromptOptions {
 }
 export function getCodeGenSystemPrompt(options: GetCodeGenSystemPromptOptions) {
   return `
-Update the following React program based on user's goal.
+Write React program based on user's goal. 
+Requirement: 
+- Your code must extend the template.
+- Do not remove components from the template. You can edit properties or add children.
 
 \`\`\`jsx
 ${options.baseSource}
 \`\`\`
 
-Use the documentation surrounded by triple quotes to implement any @mentioned component. Decline a change when there isn't enough documentation.
+Use the documentation surrounded by triple quotes to implement any @mentioned component. 
 
 """
 ${options.docs.join("\n\n---\n\n")}
 """
 
-Solve the problem step by step. Describe your plan first. Then provide updated code in a single jsx code block. Do not explain your code. If you declline a change, describe alternative solutions without writing code.
+Solve the problem step by step. Describe your plan first. Then provide updated code in a single jsx code block. Do not explain your code.
+If user didn't provide documentation, decline the edit and ask user to rewrite the request with more details.
   `.trim();
 }
