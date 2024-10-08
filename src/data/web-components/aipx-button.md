@@ -22,5 +22,5 @@ Variants
       color: white;
     }
   </style>
-  <button><slot></slot><button>
+  <button><slot></slot></button>
 </template>

@@ -32,6 +32,7 @@ import { initializeAuthenticatedApp } from "./lib/azure";
 import { getChatCompletionStream } from "./lib/chat";
 import { filesToNamedBlobUrls } from "./lib/clipboard";
 import { mountArtifactEditor } from "./lib/editor";
+import { renderServerHtml } from "./lib/html-vm";
 import { $ctrlSpaceKeydownRaw, $spaceKeyupRaw } from "./lib/keyboard";
 import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
@@ -362,7 +363,7 @@ initializeAuthenticatedApp().then(() => {
       tap((artifact) => (previewIFrame.dataset.artifactId = artifact.id)),
       tap((artifact) => (debugButton.disabled = !artifact.error)),
       distinctUntilKeyChanged("id"),
-      map((artifact) => artifact.minimumCode),
+      map((artifact) => renderServerHtml(artifact.minimumCode)),
       tap((reactVMCode) => (previewIFrame.srcdoc = reactVMCode))
     )
     .subscribe();
