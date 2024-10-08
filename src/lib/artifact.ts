@@ -33,7 +33,13 @@ export function symbolizeArtifact(options: { id: string; name: string; content: 
       {
         name: "code",
         renderer(_token) {
-          return `<button data-action="open-artifact" data-artifact="${options.id}">${options.name}</button>`;
+          return `
+          <details>
+            <summary>Mutation</summary>
+            <pre><code>${options.content}</code></pre>
+          </details>
+          <button data-action="open-artifact" data-artifact="${options.id}">${options.name}</button>
+          `;
         },
       },
     ],

@@ -33,8 +33,9 @@ import { getChatCompletionStream } from "./lib/chat";
 import { filesToNamedBlobUrls } from "./lib/clipboard";
 import { mountArtifactEditor } from "./lib/editor";
 import { renderServerHtml } from "./lib/html-vm";
+import { compile } from "./lib/js-vm";
 import { $ctrlSpaceKeydownRaw, $spaceKeyupRaw } from "./lib/keyboard";
-import { getCodeGenSystemPrompt } from "./lib/prompt";
+import { getDomEditSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
 import { getAtMentionedWord, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
 import {
@@ -181,26 +182,17 @@ initializeAuthenticatedApp().then(() => {
     .pipe(
       map((_) => submitDraft(promptTextarea)),
       filter((submission) => submission !== null),
-      // switchMap(async ({ id, parts, abortController }) => {
-      //   const augmented = await augmentChat(parts, abortController.signal).catch(() => ({ parts: [] }));
-      //   return { id, parts: augmented.parts, abortController };
-      // }),
       tap(({ id, parts }) => updateThread((prev) => prev.map((item) => (item.id === id ? { ...item, content: parts } : item)))),
       withLatestFrom($baseArtifact),
       switchMap(async ([submission, baseArtifact]) => {
         if (submission.abortController.signal.aborted) return { submission, $chunks: EMPTY as Observable<string>, responseId: "" };
+        const existingMessages = $thread.value.map((item) => ({ role: item.role, content: item.content }));
         const responseId = createMessage("assistant", "");
-        // const allDocMentions = $thread.value
-        //   .flatMap((item) =>
-        //     Array.isArray(item.content) ? item.content.filter((content) => content.type === "text").map((item) => item.text) : [item.content]
-        //   )
-        //   .flatMap(getDocMentions);
 
-        // const docs = await getDocs(allDocMentions, submission.abortController.signal).catch(() => []);
-
-        const systemPrompt = getCodeGenSystemPrompt({ baseSource: baseArtifact.minimumCode });
+        const currentArtifact = $artifacts.value.find((artifact) => artifact.isActive)!;
+        const systemPrompt = getDomEditSystemPrompt({ html: currentArtifact.minimumCode });
         const $chunks = await getChatCompletionStream(
-          [{ role: "system", content: systemPrompt }, ...$thread.value.map((item) => ({ role: item.role, content: item.content }))],
+          [{ role: "system", content: systemPrompt }, ...existingMessages.slice(-1)],
           { temperature: 0 },
           { signal: submission.abortController.signal }
         );
@@ -229,6 +221,42 @@ initializeAuthenticatedApp().then(() => {
 
   let artifactVersion = 0;
   function renderArtifact(responseId: string) {
+    const javascriptCodePattern = /```javascript\n([\s\S]*)\n```/;
+    const javascriptCode = ($thread.value.find((item) => item.id === responseId)?.content as string).match(javascriptCodePattern)?.at(1) ?? "";
+    if (javascriptCode) {
+      const artifactId = crypto.randomUUID();
+      const currentArtifactVersion = ++artifactVersion;
+      const artifacts = $artifacts.value;
+      const artifact = artifacts.find((artifact) => artifact.isActive);
+      if (!artifact) throw new Error("Active artifact not found");
+      const previousHtml = artifact.minimumCode;
+      const parser = new DOMParser();
+      const vdom = parser.parseFromString(previousHtml, "text/html");
+      const mutationFn = compile({ source: javascriptCode });
+
+      mutationFn(vdom);
+
+      updateArtifact((prev) => [
+        ...prev.map((artifact) => ({ ...artifact, isActive: false })),
+        {
+          id: artifactId,
+          name: `Revision ${currentArtifactVersion}`,
+          minimumCode: `<!DOCTYPE html>\n${vdom.documentElement.outerHTML}`,
+          isActive: true,
+        },
+      ]);
+
+      updateThreadAsync(async (prev) =>
+        Promise.all(
+          prev.map(async (item) =>
+            item.id === responseId
+              ? { ...item, html: await symbolizeArtifact({ content: item.content as string, id: artifactId, name: `Revision ${currentArtifactVersion}` }) }
+              : item
+          )
+        )
+      );
+    }
+
     const markdownCodePattern = /```html\n([\s\S]*)\n```/;
     const htmlCode = ($thread.value.find((item) => item.id === responseId)?.content as string).match(markdownCodePattern)?.at(1) ?? "";
     if (htmlCode) {
