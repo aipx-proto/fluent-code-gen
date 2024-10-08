@@ -1,8 +1,10 @@
 import { parse } from "yaml";
 
-import flexboxMd from "./web-components/aipx-flexbox.md?raw";
+import button from "./web-components/aipx-button.md?raw";
+import flexbox from "./web-components/aipx-flexbox.md?raw";
 
-const sources = [flexboxMd];
+const sources = [flexbox, button];
+
 const frontmatterPattern = /^---\n([\s\S]*?)\n---\n/;
 const templateTagPattern = /(<template[^>]*>[\s\S]*?<\/template>)/;
 const consecutiveNewLinesPattern = /\n{2,}/g;
