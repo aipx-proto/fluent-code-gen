@@ -1,6 +1,8 @@
 import { html, nothing, render } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
+import prettier from "prettier";
+import htmlPlugin from "prettier/plugins/html";
 import {
   combineLatestWith,
   distinctUntilChanged,
@@ -220,7 +222,7 @@ initializeAuthenticatedApp().then(() => {
     .subscribe();
 
   let artifactVersion = 0;
-  function renderArtifact(responseId: string) {
+  async function renderArtifact(responseId: string) {
     const javascriptCodePattern = /```javascript\n([\s\S]*)\n```/;
     const javascriptCode = ($thread.value.find((item) => item.id === responseId)?.content as string).match(javascriptCodePattern)?.at(1) ?? "";
     if (javascriptCode) {
@@ -236,12 +238,16 @@ initializeAuthenticatedApp().then(() => {
 
       mutationFn(vdom);
 
+      const fullHtmlDoc = `<!DOCTYPE html>\n${vdom.documentElement.outerHTML}`;
+      const formattedCode = await prettier.format(fullHtmlDoc, { parser: "html", plugins: [htmlPlugin] });
+      console.log(formattedCode);
+
       updateArtifact((prev) => [
         ...prev.map((artifact) => ({ ...artifact, isActive: false })),
         {
           id: artifactId,
           name: `Revision ${currentArtifactVersion}`,
-          minimumCode: `<!DOCTYPE html>\n${vdom.documentElement.outerHTML}`,
+          minimumCode: formattedCode,
           isActive: true,
         },
       ]);
@@ -349,8 +355,8 @@ initializeAuthenticatedApp().then(() => {
                   ${item.html
                     ? html`<div class="html">${unsafeHTML(item.html)}</div>`
                     : typeof item.content === "string"
-                    ? html`<div data-wrap="pre-wrap">${item.content}</div>`
-                    : html`<div data-wrap="pre-wrap">${getTextContent(item)}</div>`}
+                      ? html`<div data-wrap="pre-wrap">${item.content}</div>`
+                      : html`<div data-wrap="pre-wrap">${getTextContent(item)}</div>`}
                   ${Array.isArray(item.content)
                     ? html`
                         <div class="thumbnail-grid">
@@ -371,14 +377,14 @@ initializeAuthenticatedApp().then(() => {
   $draft
     .pipe(
       map(
-        (draft) =>
-          html`
-            ${draft.attachments.map(
-              (file) => html`<button class="thumbnail-button thumbnail-grid__item" title=${file.name} data-action="remove-attachment">
+        (draft) => html`
+          ${draft.attachments.map(
+            (file) =>
+              html`<button class="thumbnail-button thumbnail-grid__item" title=${file.name} data-action="remove-attachment">
                 <img src=${file.url} alt="attachment" class="thumbnail" />
               </button>`
-            )}
-          `
+          )}
+        `
       )
     )
     .subscribe((view) => render(view, attachments));
@@ -399,14 +405,13 @@ initializeAuthenticatedApp().then(() => {
   $artifacts
     .pipe(
       map(
-        (artifacts) =>
-          html`
-            ${repeat(
-              artifacts,
-              (artifact) => artifact.id,
-              (artifact) => html`<button data-action="open-artifact" data-artifact="${artifact.id}">${artifact.name}</button>`
-            )}
-          `
+        (artifacts) => html`
+          ${repeat(
+            artifacts,
+            (artifact) => artifact.id,
+            (artifact) => html`<button data-action="open-artifact" data-artifact="${artifact.id}">${artifact.name}</button>`
+          )}
+        `
       )
     )
     .subscribe((artifacts) => render(artifacts, artifactList));
