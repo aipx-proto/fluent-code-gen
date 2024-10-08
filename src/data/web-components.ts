@@ -7,9 +7,17 @@ const frontmatterPattern = /^---\n([\s\S]*?)\n---\n/;
 const templateTagPattern = /(<template[^>]*>[\s\S]*?<\/template>)/;
 const consecutiveNewLinesPattern = /\n{2,}/g;
 
-export interface RuntimeComponent {}
-export async function load() {
-  sources.map((source) => {
+export interface RuntimeComponent {
+  tagName: string;
+  description: string;
+  doc: string;
+  template: string;
+}
+
+export const runtimeWebComponents: RuntimeComponent[] = loadWebComponents();
+
+function loadWebComponents(): RuntimeComponent[] {
+  return sources.map((source) => {
     let data = {};
     let content = source;
     let template = "";
@@ -34,6 +42,6 @@ export async function load() {
       throw new Error("Missing tagName or description in frontmatter");
     }
 
-    console.log({ tagName, description, doc, template });
+    return { tagName, description, doc, template };
   });
 }

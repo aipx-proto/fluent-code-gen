@@ -200,7 +200,7 @@ initializeAuthenticatedApp().then(() => {
         //   .flatMap(getDocMentions);
 
         // const docs = await getDocs(allDocMentions, submission.abortController.signal).catch(() => []);
-        // console.log(`Docs in use`, docs);
+
         const systemPrompt = getCodeGenSystemPrompt({ baseSource: baseArtifact.minimumCode });
         const $chunks = await getChatCompletionStream(
           [{ role: "system", content: systemPrompt }, ...$thread.value.map((item) => ({ role: item.role, content: item.content }))],
