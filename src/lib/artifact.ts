@@ -1,4 +1,3 @@
-import type { ReactVMErrorMessage } from "ai-studio-cdk/react-vm";
 import { marked } from "marked";
 import { BehaviorSubject, filter, map } from "rxjs";
 import { baseArtifacts } from "../data/base-artifacts";
@@ -7,7 +6,7 @@ export interface ArtifactVersion {
   id: string;
   name: string;
   minimumCode: string;
-  error?: ReactVMErrorMessage;
+  error?: any;
   isActive?: boolean;
   isBase?: boolean;
 }
