@@ -18,6 +18,7 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs";
+import { load } from "./data/web-components";
 import { createDebugPrompt } from "./handlers/handle-auto-debug";
 import { handleClearThread } from "./handlers/handle-clear-thread";
 import { handleExport } from "./handlers/handle-export";
@@ -52,6 +53,9 @@ import {
 } from "./lib/thread";
 import { getTranscriber } from "./lib/transcribe";
 import "./main.css";
+
+// debug only
+load();
 
 initializeAuthenticatedApp().then(() => {
   document.body.classList.add("authenticated");

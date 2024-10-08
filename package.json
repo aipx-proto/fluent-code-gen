@@ -20,9 +20,11 @@
     "@codemirror/view": "^6.33.0",
     "codemirror": "^6.0.1",
     "gpt-tokenizer": "^2.2.3",
+    "gray-matter": "^4.0.3",
     "lit": "^3.2.0",
     "marked": "^14.1.2",
     "openai": "^4.57.0",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "yaml": "^2.5.1"
   }
 }
