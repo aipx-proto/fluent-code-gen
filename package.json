@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@azure/identity": "^4.4.1",
-    "@codemirror/lang-javascript": "^6.2.2",
+    "@codemirror/lang-html": "^6.4.9",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.33.0",
     "codemirror": "^6.0.1",

@@ -35,8 +35,7 @@ import { mountArtifactEditor } from "./lib/editor";
 import { $ctrlSpaceKeydownRaw, $spaceKeyupRaw } from "./lib/keyboard";
 import { getCodeGenSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
-import { getReactVMHtml } from "./lib/react-vm";
-import { augmentChat, getAtMentionedWord, getDocMentions, getDocs, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
+import { getAtMentionedWord, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
 import {
   $draft,
   $draftDistinctContent,
@@ -181,24 +180,24 @@ initializeAuthenticatedApp().then(() => {
     .pipe(
       map((_) => submitDraft(promptTextarea)),
       filter((submission) => submission !== null),
-      switchMap(async ({ id, parts, abortController }) => {
-        const augmented = await augmentChat(parts, abortController.signal).catch(() => ({ parts: [] }));
-        return { id, parts: augmented.parts, abortController };
-      }),
+      // switchMap(async ({ id, parts, abortController }) => {
+      //   const augmented = await augmentChat(parts, abortController.signal).catch(() => ({ parts: [] }));
+      //   return { id, parts: augmented.parts, abortController };
+      // }),
       tap(({ id, parts }) => updateThread((prev) => prev.map((item) => (item.id === id ? { ...item, content: parts } : item)))),
       withLatestFrom($baseArtifact),
       switchMap(async ([submission, baseArtifact]) => {
         if (submission.abortController.signal.aborted) return { submission, $chunks: EMPTY as Observable<string>, responseId: "" };
         const responseId = createMessage("assistant", "");
-        const allDocMentions = $thread.value
-          .flatMap((item) =>
-            Array.isArray(item.content) ? item.content.filter((content) => content.type === "text").map((item) => item.text) : [item.content]
-          )
-          .flatMap(getDocMentions);
+        // const allDocMentions = $thread.value
+        //   .flatMap((item) =>
+        //     Array.isArray(item.content) ? item.content.filter((content) => content.type === "text").map((item) => item.text) : [item.content]
+        //   )
+        //   .flatMap(getDocMentions);
 
-        const docs = await getDocs(allDocMentions, submission.abortController.signal).catch(() => []);
-        console.log(`Docs in use`, docs);
-        const systemPrompt = getCodeGenSystemPrompt({ docs, baseSource: baseArtifact.minimumCode });
+        // const docs = await getDocs(allDocMentions, submission.abortController.signal).catch(() => []);
+        // console.log(`Docs in use`, docs);
+        const systemPrompt = getCodeGenSystemPrompt({ baseSource: baseArtifact.minimumCode });
         const $chunks = await getChatCompletionStream(
           [{ role: "system", content: systemPrompt }, ...$thread.value.map((item) => ({ role: item.role, content: item.content }))],
           { temperature: 0 },
@@ -229,10 +228,10 @@ initializeAuthenticatedApp().then(() => {
 
   let artifactVersion = 0;
   function renderArtifact(responseId: string) {
-    const markdownCodePattern = /```jsx\n([\s\S]*)\n```/;
-    const jsxCode = ($thread.value.find((item) => item.id === responseId)?.content as string).match(markdownCodePattern)?.at(1) ?? "";
-    if (jsxCode) {
-      const minimumCode = jsxCode;
+    const markdownCodePattern = /```html\n([\s\S]*)\n```/;
+    const htmlCode = ($thread.value.find((item) => item.id === responseId)?.content as string).match(markdownCodePattern)?.at(1) ?? "";
+    if (htmlCode) {
+      const minimumCode = htmlCode;
       const artifactId = crypto.randomUUID();
       const currentArtifactVersion = ++artifactVersion;
 
@@ -363,7 +362,7 @@ initializeAuthenticatedApp().then(() => {
       tap((artifact) => (previewIFrame.dataset.artifactId = artifact.id)),
       tap((artifact) => (debugButton.disabled = !artifact.error)),
       distinctUntilKeyChanged("id"),
-      map((artifact) => getReactVMHtml({ implementation: artifact.minimumCode })),
+      map((artifact) => artifact.minimumCode),
       tap((reactVMCode) => (previewIFrame.srcdoc = reactVMCode))
     )
     .subscribe();

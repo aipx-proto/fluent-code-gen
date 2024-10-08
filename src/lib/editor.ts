@@ -1,4 +1,4 @@
-import { javascript } from "@codemirror/lang-javascript";
+import { html } from "@codemirror/lang-html";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { highlightActiveLine } from "@codemirror/view";
 import { EditorView, minimalSetup } from "codemirror";
@@ -14,10 +14,7 @@ export function mountArtifactEditor(props: SourceEditorProps) {
       minimalSetup,
       oneDark,
       highlightActiveLine(),
-      javascript({
-        jsx: true,
-        typescript: true,
-      }),
+      html(),
       EditorView.focusChangeEffect.of((state, focusing) => {
         if (focusing) return null;
         props.onChange?.(state.doc.toString());
