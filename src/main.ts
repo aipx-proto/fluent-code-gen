@@ -239,7 +239,7 @@ initializeAuthenticatedApp().then(() => {
       mutationFn(vdom);
 
       const fullHtmlDoc = `<!DOCTYPE html>\n${vdom.documentElement.outerHTML}`;
-      const formattedCode = await prettier.format(fullHtmlDoc, { parser: "html", plugins: [htmlPlugin] });
+      const formattedCode = await prettier.format(fullHtmlDoc, { parser: "html", plugins: [htmlPlugin], bracketSameLine: true });
       console.log(formattedCode);
 
       updateArtifact((prev) => [
