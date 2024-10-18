@@ -135,14 +135,15 @@ initializeAuthenticatedApp().then(() => {
   fromEvent(holdToTalkButton, "mousedown")
     .pipe(
       mergeWith($ctrlSpaceKeydownRaw),
+      filter(() => (useMicrophoneButton.dataset as any).hidden), // make sure use opted into voice mode
       tap(() => abortRunningMessage()),
-      tap(() => (holdToTalkButton.textContent = "Release Ctrl + Space to submit"))
+      tap(() => (holdToTalkButton.textContent = "Release Space to submit"))
     )
     .subscribe(start);
   fromEvent(holdToTalkButton, "mouseup")
     .pipe(
       mergeWith($spaceKeyupRaw),
-      tap(() => (holdToTalkButton.textContent = "Hold Ctrl + Space to talk"))
+      tap(() => (holdToTalkButton.textContent = "Hold Space to talk"))
     )
     .subscribe(stop);
 

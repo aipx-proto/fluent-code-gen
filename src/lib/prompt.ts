@@ -35,7 +35,7 @@ export interface GetDomEditSystemPromptOptions {
 }
 export function getDomEditSystemPrompt(options: GetDomEditSystemPromptOptions) {
   return `
-Write javascript function to update the DOM based on user's goal. DOM has the following HTML:
+Write javascript function to update the DOM based on user's goal. DOM is already loaded with following HTML:
 
 \`\`\`html
 ${options.html}
@@ -56,7 +56,8 @@ ${component.doc}
   )
   .join("\n\n")}
 
-Solve the problem step by step. Describe your plan first. Then write a javascript function named \`main\` that takes the dom as input and performs the updates.
+When instruction is clear, respond with code directly. When instruction is complex, solve the problem step by step. Describe your plan first. Then write a javascript function named \`main\` that takes the dom as input and performs the updates.
+
 Requirements:
 - Do not call the function.
 - Do not explain your code.

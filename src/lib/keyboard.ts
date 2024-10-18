@@ -8,9 +8,9 @@ export const $spaceKeyupRaw = fromEvent<KeyboardEvent>(document, "keyup").pipe(
 );
 
 export const $ctrlSpaceKeydownRaw = fromEvent<KeyboardEvent>(document, "keydown").pipe(
+  filter(() => document.activeElement === document.body),
   filter(() => $mediaRecorder.value?.state !== "recording"),
-  filter((e) => e.ctrlKey && e.code === "Space"),
-  tap((e) => console.log("keydown", e)),
+  filter((e) => e.code === "Space"),
   tap((e) => e.preventDefault()),
-  tap(() => console.log("ctrl space down"))
+  tap(() => console.log("space down"))
 );
