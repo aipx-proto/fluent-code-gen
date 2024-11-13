@@ -37,7 +37,7 @@ import { mountArtifactEditor } from "./lib/editor";
 import { renderServerHtml } from "./lib/html-vm";
 import { compile } from "./lib/js-vm";
 import { $ctrlSpaceKeydownRaw, $spaceKeyupRaw } from "./lib/keyboard";
-import { getDomEditSystemPrompt } from "./lib/prompt";
+import { getWiredEditSystemPrompt } from "./lib/prompt";
 import { $ } from "./lib/query";
 import { getAtMentionedWord, getSuggestionStream, matchKeywordToDocs } from "./lib/suggestion";
 import {
@@ -193,7 +193,7 @@ initializeAuthenticatedApp().then(() => {
         const responseId = createMessage("assistant", "");
 
         const currentArtifact = $artifacts.value.find((artifact) => artifact.isActive)!;
-        const systemPrompt = getDomEditSystemPrompt({ html: currentArtifact.minimumCode });
+        const systemPrompt = getWiredEditSystemPrompt({ html: currentArtifact.minimumCode });
         const $chunks = await getChatCompletionStream(
           [{ role: "system", content: systemPrompt }, ...existingMessages.slice(-1)],
           { temperature: 0 },

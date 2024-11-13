@@ -1,4 +1,5 @@
 import { runtimeWebComponents } from "../data/web-components";
+import wiredDocumentation from "../data/wired/index.md?raw";
 
 export interface GetCodeGenSystemPromptOptions {
   baseSource: string;
@@ -55,6 +56,34 @@ ${component.doc}
 `.trim()
   )
   .join("\n\n")}
+
+When instruction is clear, respond with code directly. When instruction is complex, solve the problem step by step. Describe your plan first. Then write a javascript function named \`main\` that takes the dom as input and performs the updates.
+
+Requirements:
+- Do not call the function.
+- Do not explain your code.
+- Respond in this format:
+
+\`\`\`javascript
+function main(document) {
+  /* your implementation here */
+}
+\`\`\`
+  `.trim();
+}
+
+export function getWiredEditSystemPrompt(options: GetDomEditSystemPromptOptions) {
+  return `
+Write javascript function to update the DOM based on user's goal. DOM is already loaded with following HTML:
+
+\`\`\`html
+${options.html}
+\`\`\`
+
+In addition, you have access to the wired-elements library. The library is already installed and imported. You can directly use the following elements
+"""
+${wiredDocumentation.trim()}
+"""
 
 When instruction is clear, respond with code directly. When instruction is complex, solve the problem step by step. Describe your plan first. Then write a javascript function named \`main\` that takes the dom as input and performs the updates.
 

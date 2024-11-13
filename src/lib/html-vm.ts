@@ -22,6 +22,16 @@ export function getStarterHtml() {
   <head>
     <meta charset="utf-8">
     <title>Prototype</title>
+    <link href="https://fonts.googleapis.com/css?family=Gloria+Hallelujah&display=swap" rel="stylesheet" />
+    <style>
+      body {
+        margin: 0;
+        font-family: "Gloria Hallelujah", cursive;
+        font-size: 16px;
+        line-height: 1.8;
+      }
+    </style>
+    <script type="module" src="https://esm.sh/wired-elements@latest?deps=roughjs@4.4"></script>
   </head>
   <body>
     <!-- page content -->
